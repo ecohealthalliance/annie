@@ -19,7 +19,7 @@ class ConceptAnnotatorTest(unittest.TestCase):
 
         annotator = ConceptAnnotator()
 
-        text = 'I went to Maine.'
+        text = 'I went to Maine in America, that is Maine in the United States of America.'
         doc = AnnoDoc(text)
         doc.add_tier(annotator)
 
