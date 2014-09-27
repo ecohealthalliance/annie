@@ -7,7 +7,22 @@ import dateutil.parser
 import requests
 
 from annotator import *
+from time_expressions import *
 
+class StanfordSpan(AnnoSpan):
+    def __init__(self, span_dict, doc):
+        self.start = span_dict['start']
+        self.end = span_dict['stop']
+        self.doc = doc
+        self.span_dict = span_dict
+        self.label = span_dict['label']
+        self.type = span_dict['type']
+    def to_dict(self):
+        result = super(StanfordSpan, self).to_dict()
+        result.update(self.span_dict)
+        del result['start']
+        del result['stop']
+        return result
 
 class JVMNLPAnnotator():
 
@@ -41,8 +56,6 @@ class JVMNLPAnnotator():
                                 data=doc.to_json(),
                                 headers=headers)
 
-        spans = []
-
         # Why aren't we using a swagger-generated client here? Because they
         # don't have Maps very well, so the tiers maps doesn't work out.
 
@@ -63,15 +76,23 @@ class JVMNLPAnnotator():
                 doc.date = return_date
 
         for tier in self.tiers:
-            for request_span in return_json['tiers'][tier]['spans']:
 
-                span = AnnoSpan(request_span['start'],
-                                request_span['stop'],
-                                doc)
+            spans = []
+
+            for request_span in return_json['tiers'][tier]['spans']:
+                span = StanfordSpan(request_span, doc)
                 if 'label' in request_span:
                     span.label = request_span['label']
                 if 'type' in request_span:
                     span.type = request_span['type']
+                if 'timePoint' in request_span:
+                    span.timePoint = TimePoint.from_json(request_span['timePoint'])
+                if 'timeRange' in request_span:
+                    span.timeRange = TimeRange.from_json(request_span['timeRange'])
+                if 'timeDuration' in request_span:
+                    span.timeDuration = TimeDuration.from_json(request_span['timeDuration'])
+                if 'timeSet' in request_span:
+                    span.timeSet = TimeSet.from_json(request_span['timeSet'])
 
                 spans.append(span)
 
