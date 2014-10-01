@@ -96,6 +96,7 @@ class CaseCountAnnotatorTest(unittest.TestCase):
             }
         )
         self.assertEqual(len(doc.tiers['patientInfo']), 1)
+    
     def test_hospital_counts2(self):
         example, actual_count = "222 were admitted to hospitals with symptoms of diarrhea", 222
         doc = AnnoDoc(example)
@@ -126,6 +127,7 @@ class CaseCountAnnotatorTest(unittest.TestCase):
                 }
             }
         )
+    
     def test_death_counts_pattern_problem(self):
         """The issue here is that CLIPS pattern library will tokenize colons
            separately from the preceding word."""
@@ -324,7 +326,6 @@ class CaseCountAnnotatorTest(unittest.TestCase):
             }
         )
     def test_hyphenated_numbers(self):
-
         doc = AnnoDoc("There have been nine hundred ninety-nine reported cases.")
         doc.add_tier(self.annotator)
         test_utils.assertHasProps(
@@ -335,7 +336,19 @@ class CaseCountAnnotatorTest(unittest.TestCase):
             }
         )
 
-
+    def test_date_interference(self):
+        doc = AnnoDoc(
+            "From January to February 2012 registered 1,050 cases of measles in 39 subjects."
+        )
+        doc.add_tier(self.annotator)
+        test_utils.assertHasProps(
+            doc.tiers['patientInfo'].spans[0].metadata, {
+                'count' : {
+                    'number': 1050,
+                }
+            }
+        )
+        
 if __name__ == '__main__':
     unittest.main()
 
@@ -354,19 +367,6 @@ class TestCountExtractorAspirations(unittest.TestCase):
         count_obj = next(extract_counts(example), {})
         self.assertEqual(count_obj.get('type'), "caseCount")
         self.assertEqual(count_obj.get('aproximate'), True)
-        self.assertEqual(count_obj.get('value'), actual_count)
-    def test_location_association(self):
-        example = "500 new MERS cases that Saudi Arabia has reported in the past 3 months appear to have occurred in hospitals"
-        actual_count = 500
-        count_obj = next(extract_counts(example), {})
-        self.assertEqual(count_obj.get('location'), "Saudi Arabia")
-        self.assertEqual(count_obj.get('value'), actual_count)
-    def test_time_association(self):
-        example = "Since 2001, the median annual number of cases in the U.S. was 60"
-        actual_count = 60
-        count_obj = next(extract_counts(example), {})
-        self.assertEqual(count_obj.get('time'), "2001")
-        self.assertEqual(count_obj.get('valueModifier'), "median")
         self.assertEqual(count_obj.get('value'), actual_count)
 
 """

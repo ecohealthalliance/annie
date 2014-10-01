@@ -331,6 +331,12 @@ class PatientInfoAnnotatorTest(unittest.TestCase):
             'count.female'
         ), None)
 
+    # def test_location_association(self):
+    #     example = "500 new MERS cases that Saudi Arabia has reported in the past 3 months appear to have occurred in hospitals"
+    
+    # def test_time_association(self):
+    #     example = "Since 2001, the median annual number of cases in the U.S. was 60"
+
     def test_hyphenated_age(self):
         doc = AnnoDoc("forty-six-year-old")
         doc.add_tier(self.annotator)
