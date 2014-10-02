@@ -337,6 +337,10 @@ class PatientInfoAnnotatorTest(unittest.TestCase):
     # def test_time_association(self):
     #     example = "Since 2001, the median annual number of cases in the U.S. was 60"
 
+    # A 62 year old
+    # Age: 62 years old 
+    # Time: P62Y
+
     def test_hyphenated_age(self):
         doc = AnnoDoc("forty-six-year-old")
         doc.add_tier(self.annotator)
