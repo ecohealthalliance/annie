@@ -321,7 +321,7 @@ class AnnoSpan(object):
 
     def extended_through(self, other_span):
         """
-        Create a new span like this one but with it's range extended through
+        Create a new span like this one but with its range extended through
         the range of the other span.
         """
         return AnnoSpan(
@@ -332,6 +332,15 @@ class AnnoSpan(object):
         )
 
     def size(self): return self.end - self.start
+
+    def overlap_in_tier(self, tier):
+        """Find any exactly overlapping spans in another tier"""
+
+        for span in tier.spans:
+            if span.start == self.start and span.end == self.end:
+                return span
+
+        return None
 
     @lazy
     def text(self):
