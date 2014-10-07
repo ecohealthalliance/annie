@@ -30,7 +30,7 @@ class Endpoint():
         else:
             return self.get_idx() < other.get_idx()
 
-@prof.profiled
+@prof.Profiled('annie')
 def find_maximum_weight_interval_set(intervals):
     """
     Takes a list of weighted intervals and returns a non-overlapping set of them

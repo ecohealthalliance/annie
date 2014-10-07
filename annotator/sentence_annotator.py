@@ -16,7 +16,7 @@ class SentenceAnnotator(Annotator):
 
         self.breaker = breaker
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc):
         """Takes AnnoDoc string and returns an AnnoTier"""
 

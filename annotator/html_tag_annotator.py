@@ -68,7 +68,7 @@ class HTMLTagAnnotator:
             self.tagset = []
         self.tags = []
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc):
         """Annotate a document by taking the text and removing all HTML tags.
         Add spans for the tags in tagset. Need to run this first before other

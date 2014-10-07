@@ -22,7 +22,7 @@ class MetaMatch(pattern.search.Match):
     def __repr__(self):
         return "MetaMatch(" + ", ".join(map(str, self.matches)) + ")"
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def groupdict(self):
         """
         Return a dict with all the labeled matches.
@@ -38,7 +38,7 @@ class MetaMatch(pattern.search.Match):
                     out.update(match.groupdict())
         return out
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def interate_matches(self):
         """
         Iterate over all the plain match objects nested in MetaMatches
@@ -50,7 +50,7 @@ class MetaMatch(pattern.search.Match):
             else:
                 yield match
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def match_length(self, include_overlap=False):
         """
         Return the cumulative length of all the submatches rather than the
@@ -66,11 +66,11 @@ class MetaMatch(pattern.search.Match):
         else:
             return len(word_indices)
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def constituents(self):
         return self.words
 
-@prof.profiled
+@prof.Profiled('annie')
 def near(results_lists, max_words_between=30):
     """
     Returns matches from mulitple results lists that appear in the same sentence
@@ -90,7 +90,7 @@ def near(results_lists, max_words_between=30):
             result += follows(permutation, max_words_between, max_overlap=10)
     return result
 
-@prof.profiled
+@prof.Profiled('annie')
 def match_follows(match_a, match_b, max_words_between, max_overlap):
     """
     Returns true if the second match is in the same sentence,
@@ -113,7 +113,7 @@ def match_follows(match_a, match_b, max_words_between, max_overlap):
         return False
     return True
 
-@prof.profiled
+@prof.Profiled('annie')
 def follows(results_lists, max_words_between=0, max_overlap=5):
     """
     Find sequences of matches matching the order in the results lists.
@@ -147,7 +147,7 @@ def follows(results_lists, max_words_between=0, max_overlap=5):
     ]
     return [MetaMatch(seq, labels) for seq in sequences]
 
-@prof.profiled
+@prof.Profiled('annie')
 def label(label, results_list):
     """
     Attach a label to the results list so it can be looked up in a meta
@@ -155,7 +155,7 @@ def label(label, results_list):
     """
     return follows([(label, results_list)])
 
-@prof.profiled
+@prof.Profiled('annie')
 def combine(
     results_lists,
     prefer="first",

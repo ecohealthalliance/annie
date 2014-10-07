@@ -14,7 +14,7 @@ class NEAnnotator(Annotator):
            a list of tuples(token: str, pos: str)"""
         self.tag = tag
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc):
 
         if not 'pos' in doc.tiers:

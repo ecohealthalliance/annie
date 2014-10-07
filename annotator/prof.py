@@ -5,45 +5,73 @@ import datetime
 import cProfile
 import pstats
 from collections import defaultdict
+import functools
+
+from pymongo import MongoClient
+
+client = MongoClient('mongodb://localhost:27017/')
+db = client.profiling
+timing_coll = db.timing
+cprofile_coll = db.cprofile
 
 profile = cProfile.Profile()
 
-class Timing:
 
-    def __init__(self):
+def insert_timing(time, key, namespace):
+    timing_coll.update(
+        { 'namespace': namespace, 'key': key },
+        { '$inc': { 'calls': 1,
+                    'cumulative_time': time },
+          '$push': { 'timings': time } },
+        upsert=True)
 
-        self.calls = 0
-        self.cumulative_time = 0 # in milliseconds
-        self.times = []
+def insert_cprofile(profile, namespace):
+    profile_stats = pstats.Stats(profile).stats.items()
 
-    def add_time(self, time):
-        self.calls += 1
-        self.cumulative_time += time
-        self.times.append(time)
+    for item in profile_stats:
+        key = make_cprofile_key(item)
+        primitive_calls = item[1][0]
+        all_calls = item[1][1]
+        total_time = item[1][2]
+        cumulative_time = item[1][3]
+        cprofile_coll.update(
+            { 'namespace': namespace, 'key': key },
+            { '$inc': { 'primitive_calls': primitive_calls,
+                        'all_calls': all_calls,
+                        'total_time': total_time,
+                        'cumulative_time': cumulative_time }
+            },
+            upsert=True)
 
-timings = defaultdict(Timing)
 
 def get_milliseconds_from_timedelta(delta):
     return ( (delta.days * 24 * 60 * 1000) +
              (delta.seconds * 1000) +
              (delta.microseconds * 0.001) )
 
-def profiled(func):
-    def profiled_func(*args, **kwargs):
-        key = func.__module__ + '.' + func.__name__
+class Profiled(object):
 
-        profile.enable()
-        start = start = datetime.datetime.now()
-        result = func(*args, **kwargs)
-        elapsed = datetime.datetime.now() - start
-        elapsed_milliseconds = get_milliseconds_from_timedelta(elapsed)
-        profile.disable()
+    def __init__(self, namespace):
+        self.namespace = namespace
 
-        timings[key].add_time(elapsed_milliseconds)
+    def __call__(self, fn):
+        @functools.wraps(fn)
+        def _profiled(*args, **kwargs):
+            key = fn.__module__ + '.' + fn.__name__
+            profile.clear()
+            profile.enable()
+            start = start = datetime.datetime.now()
+            result = fn(*args, **kwargs)
+            elapsed = datetime.datetime.now() - start
+            elapsed_milliseconds = get_milliseconds_from_timedelta(elapsed)
+            profile.disable()
 
-        return result
+            insert_timing(elapsed_milliseconds, key, self.namespace)
+            insert_cprofile(profile, self.namespace)
 
-    return profiled_func
+            return result
+
+        return _profiled
 
 def get_stats():
     return pstats.Stats(profile).stats
@@ -56,13 +84,15 @@ def format_time(sometime):
     """round to two decimal places"""
     return round(sometime, 2)
 
-def get_cprofile_stats_table(sort_by='cumulative_time'):
-    """Return HTML to produce a sorted table of cprofile profiling statistics"""
+def make_cprofile_key(item):
+    return ':'.join([ str(val) for val in item[0]])
 
-    profile_stats = pstats.Stats(profile).stats.items()
+def get_cprofile_table(namespace=None, sort_by='cumulative_time'):
+    """Return HTML to produce a sorted table of cprofile profiling statistics"""
 
     header = """<table id="stats">
                     <tr>
+                        <th>namespace</th>
                         <th>call</th>
                         <th>primitive calls</th>
                         <th>all calls</th>
@@ -75,14 +105,18 @@ def get_cprofile_stats_table(sort_by='cumulative_time'):
     footer = '</table>'
     rows = []
 
-    for item in profile_stats:
+    criteria = {}
+    if namespace:
+        criteria['namespace'] = namespace
+
+    for item in cprofile_coll.find(criteria):
         row = {}
-        row['function'] = ':'.join([ str(val) for val in item[0]])
-        row['primitive_calls'] = item[1][0]
-        row['all_calls'] = item[1][1]
-        row['total_time'] = format_time(seconds_to_ms(item[1][2]))
+        row['function'] = item['key']
+        row['primitive_calls'] = item['primitive_calls']
+        row['all_calls'] = item['all_calls']
+        row['total_time'] = format_time(seconds_to_ms(item['total_time']))
         row['tt_per_call'] = format_time(row['total_time'] / row['all_calls'])
-        row['cumulative_time'] = format_time(seconds_to_ms(item[1][3]))
+        row['cumulative_time'] = format_time(seconds_to_ms(item['cumulative_time']))
         row['ct_per_call'] = format_time(row['cumulative_time'] / row['primitive_calls'])
         rows.append(row)
 
@@ -100,11 +134,12 @@ def get_cprofile_stats_table(sort_by='cumulative_time'):
 
     return header + '\n'.join(html_rows) + footer
 
-def get_stats_table(sort_by='cumulative_time'):
+def get_profile_table(namespace=None, sort_by='cumulative_time'):
     """Return HTML to produce a sorted table of our own profiling statistics"""
 
     header = """<table id="stats">
                     <tr>
+                        <th>namespace</th>
                         <th>call</th>
                         <th># calls</th>
                         <th>cumulative time</th>
@@ -114,11 +149,15 @@ def get_stats_table(sort_by='cumulative_time'):
     footer = '</table>'
     rows = []
 
-    for item in timings.items():
+    criteria = {}
+    if namespace:
+        criteria['namespace'] = namespace
+
+    for item in timing_coll.find(criteria):
         row = {}
-        row['function'] = item[0]
-        row['calls'] = item[1].calls
-        row['cumulative_time'] = format_time(item[1].cumulative_time)
+        row['function'] = item['key']
+        row['calls'] = item['calls']
+        row['cumulative_time'] = format_time(item['cumulative_time'])
         row['ct_per_call'] = format_time(row['cumulative_time'] / row['calls'])
         rows.append(row)
 

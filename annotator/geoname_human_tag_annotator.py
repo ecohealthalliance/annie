@@ -12,7 +12,7 @@ class GeonameHumanTagAnnotator:
     def __init__(self):
         pass
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc):
 
         # Need to run this first before other annotators because it strips tags

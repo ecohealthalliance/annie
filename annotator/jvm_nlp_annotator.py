@@ -41,7 +41,7 @@ class JVMNLPAnnotator():
 
         self.tiers = tiers
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc):
         """Annotate a document by taking the text and sending it to the
         anootation server.

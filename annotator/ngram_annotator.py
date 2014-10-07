@@ -13,7 +13,7 @@ class NgramAnnotator(Annotator):
     def __init__(self, tokenizer=None):
         pass
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc, n_min=1, n_max=7):
 
         if not 'tokens' in doc.tiers:

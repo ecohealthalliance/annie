@@ -13,7 +13,7 @@ class TokenAnnotator(Annotator):
            list of token strings"""
         self.tokenizer = tokenizer
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc):
 
         tokens = self.tokenizer.tokenize(doc.text)

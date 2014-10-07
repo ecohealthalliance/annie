@@ -10,7 +10,7 @@ import result_aggregators as ra
 import utils
 import prof
 
-@prof.profiled
+@prof.Profiled('annie')
 def process_match_dict(d):
     numeric_keys = ['number', 'min', 'max', 'range_start', 'range_end']
     for k, v in d.items():
@@ -43,7 +43,7 @@ class KeypointSpan(AnnoSpan):
 
 class PatientInfoAnnotator(Annotator):
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc, keyword_categories={}):
         """
         Annotate patient descriptions that appear in the doc.

@@ -48,7 +48,7 @@ blocklist = [
     'Ministry of Health and Sanitation',
 ]
 
-@prof.profiled
+@prof.Profiled('annie')
 def location_contains(loc_outer, loc_inner):
     """
     Do a comparison to see if one geonames location contains another.
@@ -101,7 +101,7 @@ class GeonameAnnotator(Annotator):
         self.geonames_collection = geonames_collection
 
     # TODO text in this case means AnnoText, elswhere, it's raw text
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc):
         logger.info('geoannotator started')
 
@@ -308,7 +308,7 @@ class GeonameAnnotator(Annotator):
 
         return doc
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def score_candidate(self, candidate, resolved_locations):
         """
         Return a score between 0 and 100

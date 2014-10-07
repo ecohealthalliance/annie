@@ -26,7 +26,7 @@ class CaseCountAnnotator(Annotator):
     so to return more detailed count information. E.g. We could infer that
     a count only applies to a specific location/time.
     """
-    @prof.profiled
+    @prof.Profiled('annie')
     def get_matches(self, count_pattern, text, search_fun):
 
         matches = search_fun(count_pattern)
@@ -75,7 +75,7 @@ class CaseCountAnnotator(Annotator):
                     }))
         return retained_matches
 
-    @prof.profiled
+    @prof.Profiled('annie')
     def annotate(self, doc):
         doc.setup_pattern()
         number_pattern = '{CD+ and? CD? CD?}'
