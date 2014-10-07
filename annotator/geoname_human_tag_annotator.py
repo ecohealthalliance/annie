@@ -5,11 +5,14 @@ from annotator import *
 
 import re
 
+import prof
+
 class GeonameHumanTagAnnotator:
 
     def __init__(self):
         pass
 
+    @prof.profiled
     def annotate(self, doc):
 
         # Need to run this first before other annotators because it strips tags

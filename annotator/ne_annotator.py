@@ -5,6 +5,7 @@ import nltk
 
 from annotator import *
 from pos_annotator import POSAnnotator
+import prof
 
 class NEAnnotator(Annotator):
 
@@ -13,6 +14,7 @@ class NEAnnotator(Annotator):
            a list of tuples(token: str, pos: str)"""
         self.tag = tag
 
+    @prof.profiled
     def annotate(self, doc):
 
         if not 'pos' in doc.tiers:

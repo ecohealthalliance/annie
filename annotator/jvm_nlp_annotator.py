@@ -8,6 +8,7 @@ import requests
 
 from annotator import *
 from time_expressions import *
+import prof
 
 class StanfordSpan(AnnoSpan):
     def __init__(self, span_dict, doc):
@@ -40,6 +41,7 @@ class JVMNLPAnnotator():
 
         self.tiers = tiers
 
+    @prof.profiled
     def annotate(self, doc):
         """Annotate a document by taking the text and sending it to the
         anootation server.

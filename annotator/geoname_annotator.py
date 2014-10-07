@@ -13,6 +13,7 @@ from maximum_weight_interval_set import Interval, find_maximum_weight_interval_s
 
 import datetime
 import logging
+import prof
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -47,6 +48,7 @@ blocklist = [
     'Ministry of Health and Sanitation',
 ]
 
+@prof.profiled
 def location_contains(loc_outer, loc_inner):
     """
     Do a comparison to see if one geonames location contains another.
@@ -99,9 +101,10 @@ class GeonameAnnotator(Annotator):
         self.geonames_collection = geonames_collection
 
     # TODO text in this case means AnnoText, elswhere, it's raw text
+    @prof.profiled
     def annotate(self, doc):
         logger.info('geoannotator started')
-        
+
         if 'ngrams' not in doc.tiers:
             ngram_annotator = NgramAnnotator()
             doc.add_tier(ngram_annotator)
@@ -117,7 +120,7 @@ class GeonameAnnotator(Annotator):
             ne_annotator = NEAnnotator()
             doc.add_tier(ne_annotator)
         logger.info('Named entities annotated')
-        
+
         geoname_cursor = self.geonames_collection.find({
             '$or' : [
                 { 'name' : { '$in' : list(all_ngrams) } },
@@ -163,7 +166,7 @@ class GeonameAnnotator(Annotator):
                 if name not in span_text_to_spans: continue
                 for span in span_text_to_spans[name]:
                     location['spans'].add(span)
-        
+
         # Add combined spans to locations that are adjacent to a span linked to
         # an administrative division. e.g. Seattle, WA
         span_to_locations = {}
@@ -180,7 +183,7 @@ class GeonameAnnotator(Annotator):
                     set(span_a.doc.text[span_a.end:span_b.start]) - set(", ")
                 ) > 1
             ): continue
-                
+
             combined_span = span_a.extended_through(span_b)
             possible_locations = []
             for loc_a, loc_b in itertools.product(
@@ -305,6 +308,7 @@ class GeonameAnnotator(Annotator):
 
         return doc
 
+    @prof.profiled
     def score_candidate(self, candidate, resolved_locations):
         """
         Return a score between 0 and 100
@@ -370,7 +374,7 @@ class GeonameAnnotator(Annotator):
 
         def distinctness():
             return 100 / float(len(candidate['alternateLocations']) + 1)
-        
+
         def max_span_score():
             max_span = max([
                 len(span.text) for span in candidate['spans']
@@ -392,7 +396,7 @@ class GeonameAnnotator(Annotator):
                 if distance < 500:
                     count += 1
             return 100 * float(count) / len(resolved_locations)
-            
+
         def closest_location():
             if len(resolved_locations) == 0: return 0
             closest = min([
@@ -410,7 +414,7 @@ class GeonameAnnotator(Annotator):
                 return 40
             else:
                 return 0
-            
+
         def containment_level():
             max_containment_level = max([
                 max(
@@ -423,7 +427,7 @@ class GeonameAnnotator(Annotator):
                 return 0
             else:
                 return 40 + max_containment_level * 10
-            
+
         def feature_code_score():
             for code, score in {
                 # Continent (need this bc Africa has 0 population)
@@ -434,7 +438,7 @@ class GeonameAnnotator(Annotator):
                 if candidate['feature code'].startswith(code):
                     return score
             return 0
-        
+
         # This prevents us from picking up congo town
         # if candidate['population'] < 1000 and candidate['feature class'] in ['A', 'P']:
         #     return 0
@@ -466,7 +470,7 @@ class GeonameAnnotator(Annotator):
             score_fun() * float(weight)
             for score_fun, weight in feature_weights.items()
         ]) / math.sqrt(sum([x**2 for x in feature_weights.values()]))
-        
+
         # This is just for debugging, put FP and FN ids here to see
         # their score.
         if candidate['geonameid'] in ['372299', '8060879', '408664', '377268']:
@@ -479,5 +483,5 @@ class GeonameAnnotator(Annotator):
                 score_fun.__name__ : score_fun()
                 for score_fun, weight in feature_weights.items()
             }
-        
+
         return total_score

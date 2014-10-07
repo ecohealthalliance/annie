@@ -7,6 +7,8 @@ pattern.search subqueries.
 import pattern, pattern.search
 import itertools
 import maximum_weight_interval_set as mwis
+import prof
+
 class MetaMatch(pattern.search.Match):
     """
     A match composed of pattern Matches
@@ -19,6 +21,8 @@ class MetaMatch(pattern.search.Match):
         self.words = matches[0].words[-1].sentence.words[min_idx:max_idx + 1]
     def __repr__(self):
         return "MetaMatch(" + ", ".join(map(str, self.matches)) + ")"
+
+    @prof.profiled
     def groupdict(self):
         """
         Return a dict with all the labeled matches.
@@ -34,6 +38,7 @@ class MetaMatch(pattern.search.Match):
                     out.update(match.groupdict())
         return out
 
+    @prof.profiled
     def interate_matches(self):
         """
         Iterate over all the plain match objects nested in MetaMatches
@@ -44,6 +49,8 @@ class MetaMatch(pattern.search.Match):
                     yield match2
             else:
                 yield match
+
+    @prof.profiled
     def match_length(self, include_overlap=False):
         """
         Return the cumulative length of all the submatches rather than the
@@ -58,9 +65,12 @@ class MetaMatch(pattern.search.Match):
             return sum(word_indices.values())
         else:
             return len(word_indices)
+
+    @prof.profiled
     def constituents(self):
         return self.words
 
+@prof.profiled
 def near(results_lists, max_words_between=30):
     """
     Returns matches from mulitple results lists that appear in the same sentence
@@ -80,6 +90,7 @@ def near(results_lists, max_words_between=30):
             result += follows(permutation, max_words_between, max_overlap=10)
     return result
 
+@prof.profiled
 def match_follows(match_a, match_b, max_words_between, max_overlap):
     """
     Returns true if the second match is in the same sentence,
@@ -102,6 +113,7 @@ def match_follows(match_a, match_b, max_words_between, max_overlap):
         return False
     return True
 
+@prof.profiled
 def follows(results_lists, max_words_between=0, max_overlap=5):
     """
     Find sequences of matches matching the order in the results lists.
@@ -135,6 +147,7 @@ def follows(results_lists, max_words_between=0, max_overlap=5):
     ]
     return [MetaMatch(seq, labels) for seq in sequences]
 
+@prof.profiled
 def label(label, results_list):
     """
     Attach a label to the results list so it can be looked up in a meta
@@ -142,6 +155,7 @@ def label(label, results_list):
     """
     return follows([(label, results_list)])
 
+@prof.profiled
 def combine(
     results_lists,
     prefer="first",
@@ -153,7 +167,7 @@ def combine(
 
     if matches are within max_proximity of eachother they are considered
     overlapping
-    
+
     remove_conflicts removes all results that overlap rather than keeping one.
     """
     all_results = reduce(lambda sofar, k: sofar + k, results_lists, [])

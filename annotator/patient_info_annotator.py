@@ -8,7 +8,9 @@ from collections import defaultdict
 from annotator import *
 import result_aggregators as ra
 import utils
+import prof
 
+@prof.profiled
 def process_match_dict(d):
     numeric_keys = ['number', 'min', 'max', 'range_start', 'range_end']
     for k, v in d.items():
@@ -41,6 +43,7 @@ class KeypointSpan(AnnoSpan):
 
 class PatientInfoAnnotator(Annotator):
 
+    @prof.profiled
     def annotate(self, doc, keyword_categories={}):
         """
         Annotate patient descriptions that appear in the doc.
@@ -245,7 +248,7 @@ class PatientInfoAnnotator(Annotator):
             # eachother, but case_and_patient_info can only be paired with
             # keyword attributes.
             [ra.near(
-                keyword_attributes + 
+                keyword_attributes +
                 [case_and_patient_info],
                 6
             )],

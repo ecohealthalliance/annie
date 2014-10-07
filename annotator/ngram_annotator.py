@@ -6,12 +6,14 @@ import nltk
 from annotator import *
 from token_annotator import TokenAnnotator
 
+import prof
+
 class NgramAnnotator(Annotator):
 
     def __init__(self, tokenizer=None):
         pass
 
-
+    @prof.profiled
     def annotate(self, doc, n_min=1, n_max=7):
 
         if not 'tokens' in doc.tiers:

@@ -7,6 +7,7 @@ from annotator import *
 
 import re
 
+import prof
 # create a subclass and override the handler methods
 class HTMLOffsetParser(HTMLParser):
 
@@ -67,6 +68,7 @@ class HTMLTagAnnotator:
             self.tagset = []
         self.tags = []
 
+    @prof.profiled
     def annotate(self, doc):
         """Annotate a document by taking the text and removing all HTML tags.
         Add spans for the tags in tagset. Need to run this first before other

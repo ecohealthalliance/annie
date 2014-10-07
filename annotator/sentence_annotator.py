@@ -6,6 +6,8 @@ from nltk import sent_tokenize
 from annotator import *
 from token_annotator import TokenAnnotator
 
+import prof
+
 class SentenceAnnotator(Annotator):
 
     def __init__(self, breaker=sent_tokenize):
@@ -14,6 +16,7 @@ class SentenceAnnotator(Annotator):
 
         self.breaker = breaker
 
+    @prof.profiled
     def annotate(self, doc):
         """Takes AnnoDoc string and returns an AnnoTier"""
 

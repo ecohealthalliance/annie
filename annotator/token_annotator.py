@@ -4,6 +4,7 @@
 import nltk
 
 from annotator import *
+import prof
 
 class TokenAnnotator(Annotator):
 
@@ -12,6 +13,7 @@ class TokenAnnotator(Annotator):
            list of token strings"""
         self.tokenizer = tokenizer
 
+    @prof.profiled
     def annotate(self, doc):
 
         tokens = self.tokenizer.tokenize(doc.text)

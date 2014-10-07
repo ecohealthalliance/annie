@@ -10,6 +10,7 @@ import pattern.search, pattern.en
 from annotator import *
 
 import utils
+import prof
 
 cumulative_pattern = re.compile('|'.join(["total", "sum", "brings to", "in all", "already"]), re.I)
 def find_cumulative_keywords(text, start_offset, stop_offset):
@@ -25,6 +26,7 @@ class CaseCountAnnotator(Annotator):
     so to return more detailed count information. E.g. We could infer that
     a count only applies to a specific location/time.
     """
+    @prof.profiled
     def get_matches(self, count_pattern, text, search_fun):
 
         matches = search_fun(count_pattern)
@@ -73,6 +75,7 @@ class CaseCountAnnotator(Annotator):
                     }))
         return retained_matches
 
+    @prof.profiled
     def annotate(self, doc):
         doc.setup_pattern()
         number_pattern = '{CD+ and? CD? CD?}'
