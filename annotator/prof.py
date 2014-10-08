@@ -11,18 +11,15 @@ from pymongo import MongoClient
 
 client = MongoClient('mongodb://localhost:27017/')
 db = client.profiling
-timing_coll = db.timing
+profile_coll = db.profile
 cprofile_coll = db.cprofile
 
-profile = cProfile.Profile()
-
-
-def insert_timing(time, key, namespace):
-    timing_coll.update(
+def insert_profile(time, key, namespace):
+    profile_coll.update(
         { 'namespace': namespace, 'key': key },
         { '$inc': { 'calls': 1,
                     'cumulative_time': time },
-          '$push': { 'timings': time } },
+          '$push': { 'times': time } },
         upsert=True)
 
 def insert_cprofile(profile, namespace):
@@ -43,6 +40,15 @@ def insert_cprofile(profile, namespace):
             },
             upsert=True)
 
+def clear_profile():
+    profile_coll.drop()
+
+def clear_cprofile():
+    cprofile_coll.drop()
+
+def clear_all():
+    clear_profile()
+    clear_cprofile()
 
 def get_milliseconds_from_timedelta(delta):
     return ( (delta.days * 24 * 60 * 1000) +
@@ -58,16 +64,32 @@ class Profiled(object):
         @functools.wraps(fn)
         def _profiled(*args, **kwargs):
             key = fn.__module__ + '.' + fn.__name__
-            profile.clear()
-            profile.enable()
             start = start = datetime.datetime.now()
             result = fn(*args, **kwargs)
             elapsed = datetime.datetime.now() - start
             elapsed_milliseconds = get_milliseconds_from_timedelta(elapsed)
-            profile.disable()
 
-            insert_timing(elapsed_milliseconds, key, self.namespace)
-            insert_cprofile(profile, self.namespace)
+            insert_profile(elapsed_milliseconds, key, self.namespace)
+
+            return result
+
+        return _profiled
+
+class CProfiled(object):
+
+    def __init__(self, namespace):
+        self.namespace = namespace
+        self.profile = cProfile.Profile()
+
+    def __call__(self, fn):
+        @functools.wraps(fn)
+        def _profiled(*args, **kwargs):
+            self.profile.clear()
+            self.profile.enable()
+            result = fn(*args, **kwargs)
+            self.profile.disable()
+
+            insert_cprofile(self.profile, self.namespace)
 
             return result
 
@@ -111,6 +133,7 @@ def get_cprofile_table(namespace=None, sort_by='cumulative_time'):
 
     for item in cprofile_coll.find(criteria):
         row = {}
+        row['namespace'] = item['namespace']
         row['function'] = item['key']
         row['primitive_calls'] = item['primitive_calls']
         row['all_calls'] = item['all_calls']
@@ -127,7 +150,7 @@ def get_cprofile_table(namespace=None, sort_by='cumulative_time'):
 
     html_rows = []
 
-    keys = ['function', 'primitive_calls', 'all_calls', 'total_time', 'tt_per_call',
+    keys = ['namespace', 'function', 'primitive_calls', 'all_calls', 'total_time', 'tt_per_call',
             'cumulative_time', 'ct_per_call']
     for row in rows:
         html_rows.append('<tr>' + '\n'.join( [ '<td>' + str(row[key]) + '</td>' for key in keys ] ) + '</tr>')
@@ -153,8 +176,9 @@ def get_profile_table(namespace=None, sort_by='cumulative_time'):
     if namespace:
         criteria['namespace'] = namespace
 
-    for item in timing_coll.find(criteria):
+    for item in profile_coll.find(criteria):
         row = {}
+        row['namespace'] = item['namespace']
         row['function'] = item['key']
         row['calls'] = item['calls']
         row['cumulative_time'] = format_time(item['cumulative_time'])
@@ -168,7 +192,7 @@ def get_profile_table(namespace=None, sort_by='cumulative_time'):
 
     html_rows = []
 
-    keys = ['function', 'calls', 'cumulative_time', 'ct_per_call']
+    keys = ['namespace', 'function', 'calls', 'cumulative_time', 'ct_per_call']
     for row in rows:
         html_rows.append('<tr>' + '\n'.join( [ '<td>' + str(row[key]) + '</td>' for key in keys ] ) + '</tr>')
 

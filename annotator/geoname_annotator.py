@@ -48,7 +48,7 @@ blocklist = [
     'Ministry of Health and Sanitation',
 ]
 
-@prof.Profiled('annie')
+@prof.Profiled('geoname')
 def location_contains(loc_outer, loc_inner):
     """
     Do a comparison to see if one geonames location contains another.
@@ -101,7 +101,7 @@ class GeonameAnnotator(Annotator):
         self.geonames_collection = geonames_collection
 
     # TODO text in this case means AnnoText, elswhere, it's raw text
-    @prof.Profiled('annie')
+    @prof.Profiled('geoname')
     def annotate(self, doc):
         logger.info('geoannotator started')
 
@@ -308,11 +308,12 @@ class GeonameAnnotator(Annotator):
 
         return doc
 
-    @prof.Profiled('annie')
+    @prof.Profiled('geoname')
     def score_candidate(self, candidate, resolved_locations):
         """
         Return a score between 0 and 100
         """
+        @prof.Profiled('geoname')
         def population_score():
             if candidate['population'] > 1000000:
                 return 100
@@ -329,6 +330,7 @@ class GeonameAnnotator(Annotator):
             else:
                 return 0
 
+        @prof.Profiled('geoname')
         def synonymity():
             # Geonames with lots of alternate names
             # tend to be the ones most commonly referred to.
@@ -342,9 +344,11 @@ class GeonameAnnotator(Annotator):
             else:
                 return 0
 
+        @prof.Profiled('geoname')
         def num_spans_score():
             return min(len(candidate['spans']), 4) * 25
 
+        @prof.Profiled('geoname')
         def short_span_score():
             max_span_length = max([
                 len(span.text) for span in candidate['spans']
@@ -356,11 +360,13 @@ class GeonameAnnotator(Annotator):
             else:
                 return 0
 
+        @prof.Profiled('geoname')
         def cannonical_name_used():
             return 100 if any([
                 span.text == candidate['name'] for span in candidate['spans']
             ]) else 0
 
+        @prof.Profiled('geoname')
         def NEs_contained():
             NE_overlap = 0
             total_len = 0
@@ -372,9 +378,11 @@ class GeonameAnnotator(Annotator):
                         NE_overlap += len(ne_span.text)
             return float(100 * NE_overlap) / total_len
 
+        @prof.Profiled('geoname')
         def distinctness():
             return 100 / float(len(candidate['alternateLocations']) + 1)
 
+        @prof.Profiled('geoname')
         def max_span_score():
             max_span = max([
                 len(span.text) for span in candidate['spans']
@@ -385,6 +393,7 @@ class GeonameAnnotator(Annotator):
             elif max_span < 15: return 80
             else: return 100
 
+        @prof.Profiled('geoname')
         def close_locations():
             if len(resolved_locations) == 0: return 0
             count = 0
@@ -397,6 +406,7 @@ class GeonameAnnotator(Annotator):
                     count += 1
             return 100 * float(count) / len(resolved_locations)
 
+        @prof.Profiled('geoname')
         def closest_location():
             if len(resolved_locations) == 0: return 0
             closest = min([
@@ -415,6 +425,7 @@ class GeonameAnnotator(Annotator):
             else:
                 return 0
 
+        @prof.Profiled('geoname')
         def containment_level():
             max_containment_level = max([
                 max(
@@ -428,6 +439,7 @@ class GeonameAnnotator(Annotator):
             else:
                 return 40 + max_containment_level * 10
 
+        @prof.Profiled('geoname')
         def feature_code_score():
             for code, score in {
                 # Continent (need this bc Africa has 0 population)
