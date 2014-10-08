@@ -18,8 +18,7 @@ def insert_profile(time, key, namespace):
     profile_coll.update(
         { 'namespace': namespace, 'key': key },
         { '$inc': { 'calls': 1,
-                    'cumulative_time': time },
-          '$push': { 'times': time } },
+                    'cumulative_time': time }},
         upsert=True)
 
 def insert_cprofile(profile, namespace):
@@ -41,10 +40,14 @@ def insert_cprofile(profile, namespace):
             upsert=True)
 
 def clear_profile():
-    profile_coll.drop()
+    profile_coll.remove()
+    profile_coll.ensure_index('namespace')
+    profile_coll.ensure_index('key')
 
 def clear_cprofile():
-    cprofile_coll.drop()
+    cprofile_coll.remove()
+    cprofile_coll.ensure_index('namespace')
+    cprofile_coll.ensure_index('key')
 
 def clear_all():
     clear_profile()
