@@ -218,47 +218,32 @@ class GeonameAnnotator(Annotator):
         resolved_locations = []
         THRESH = 60
         iteration = 0
-        while True:
-            logger.info('itartion: %s' % iteration)
-            iteration += 1
-            for candidate in remaining_locations:
-                candidate['score'] = self.score_candidate(
-                    candidate, resolved_locations
-                )
-            logger.info('locations scored')
-            # If there are alternate locations with higher scores
+        # while True:
+        logger.info('starting scoring')
+            # iteration += 1
+        for candidate in remaining_locations:
+            candidate['score'] = self.score_candidate(
+                candidate, resolved_locations
+            )
+        logger.info('locations scored')
+        # If there are alternate locations with higher scores
             # give this candidate a zero.
-            for candidate in remaining_locations:
-                for alt in candidate['alternateLocations']:
-                    # We end up with multiple locations for per span if they
-                    # are resolved in different iterations or
-                    # if the scores are exactly the same.
-                    # TODO: This needs to be delt with in the next stage.
-                    if candidate['score'] < alt['score']:
-                        candidate['score'] = 0
-                        break
-            newly_resolved_candidates = [
-                candidate
-                for candidate in remaining_locations
-                if candidate['score'] > THRESH
-            ]
-            # If there are a lot of locations
-            # comparing against the resolved locations is slow.
-            # This removes locations that have a low score.
-            if len(remaining_locations) > 1000:
-                for loc in list(remaining_locations):
-                    if loc['score'] < 15:
-                        remaining_locations.remove(loc)
-            resolved_locations.extend(newly_resolved_candidates)
-            for candiate in newly_resolved_candidates:
-                if candidate in remaining_locations:
-                    remaining_locations.remove(candiate)
-            if len(newly_resolved_candidates) == 0:
-                break
-        logger.info(
-            'resolved %s locations in %s iterations' %
-            (len(resolved_locations), iteration)
-        )
+        for candidate in remaining_locations:
+            for alt in candidate['alternateLocations']:
+                # We end up with multiple locations for per span if they
+                # are resolved in different iterations or
+                # if the scores are exactly the same.
+                # TODO: This needs to be delt with in the next stage.
+                if candidate['score'] < alt['score']:
+                    candidate['score'] = 0
+                    break
+        newly_resolved_candidates = [
+            candidate
+            for candidate in remaining_locations
+            if candidate['score'] > THRESH
+        ]
+        resolved_locations.extend(newly_resolved_candidates)
+
         geo_spans = []
         for location in resolved_locations:
             # Copy the dict so we don't need to return a custom class.
