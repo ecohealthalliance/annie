@@ -102,6 +102,7 @@ class GeonameAnnotator(Annotator):
 
     # TODO text in this case means AnnoText, elswhere, it's raw text
     @prof.Profiled('geoname')
+    @prof.CProfiled('geoname')
     def annotate(self, doc):
         logger.info('geoannotator started')
 
