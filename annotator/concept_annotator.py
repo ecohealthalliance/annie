@@ -4,6 +4,9 @@ import math
 import re
 from collections import defaultdict
 import random
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
+logger = logging.getLogger(__name__)
 
 import pymongo
 
@@ -32,21 +35,25 @@ class ConceptAnnotator(Annotator):
     def annotate(self, doc):
 
         if 'ngrams' not in doc.tiers:
+            logger.info('add ngrams tier')
             ngram_annotator = NgramAnnotator()
             doc.add_tier(ngram_annotator)
-            ne_annotator = NEAnnotator()
-            doc.add_tier(ne_annotator)
+            logger.info('added ngrams tier')
 
         if 'nes' not in doc.tiers:
+            logger.info('adding ne tier')
             ne_annotator = NEAnnotator()
             doc.add_tier(ne_annotator)
+            logger.info('added ne tier')
 
         if 'pos' not in doc.tiers:
-            pos_annotator = NEAnnotator()
-            doc.add_tier(ne_annotator)
+            logger.info('adding pos tier')
+            pos_annotator = POSAnnotator()
+            doc.add_tier(pos_annotator)
+            logger.info('added pos tier')
 
         all_ngrams = set([span.text for span in doc.tiers['ngrams'].spans])
-        print "all_ngrams", all_ngrams
+        logger.debug("all_ngrams", all_ngrams)
         ngrams_by_lc = defaultdict(list)
         for ngram in all_ngrams:
             ngrams_by_lc[ngram.lower()] += ngram
@@ -56,12 +63,14 @@ class ConceptAnnotator(Annotator):
                 # Add back once we have lp data for forms
                 # 'lp': { '$gte': self.min_link_probability } } )
         forms = list(forms_cursor)
+        logger.info('got forms')
         form_ids = [ form['_id'] for form in forms ]
         concepts = [ concept
                      for  form in forms
                      for concept in form['concepts'] ]
+        logger.info('got concepts')
         for concept in concepts:
-            print concept
+            logger.debug(concept)
         print
         print
         print 'forms', forms
@@ -131,6 +140,7 @@ class ConceptAnnotator(Annotator):
 
         doc.tiers['concepts'] = AnnoTier(concept_spans)
         doc.tiers['concepts'].filter_overlapping_spans()
+        doc.tiers['concepts'].sort_spans()
 
 
     ## CANDIDATES ##
