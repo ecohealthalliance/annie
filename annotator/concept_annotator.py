@@ -7,6 +7,7 @@ import random
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 logger = logging.getLogger(__name__)
+logger.setLevel('INFO')
 
 import pymongo
 
@@ -53,7 +54,7 @@ class ConceptAnnotator(Annotator):
             logger.info('added pos tier')
 
         all_ngrams = set([span.text for span in doc.tiers['ngrams'].spans])
-        logger.debug("all_ngrams", all_ngrams)
+        logger.debug("all_ngrams: %s", len(all_ngrams))
         ngrams_by_lc = defaultdict(list)
         for ngram in all_ngrams:
             ngrams_by_lc[ngram.lower()] += ngram
@@ -63,20 +64,18 @@ class ConceptAnnotator(Annotator):
                 # Add back once we have lp data for forms
                 # 'lp': { '$gte': self.min_link_probability } } )
         forms = list(forms_cursor)
-        logger.info('got forms')
+        logger.info('got forms: %s', len(forms))
+
         form_ids = [ form['_id'] for form in forms ]
         concepts = [ concept
                      for  form in forms
                      for concept in form['concepts'] ]
-        logger.info('got concepts')
+        logger.info('got concepts: %s', len(concepts))
+
         for concept in concepts:
             logger.debug(concept)
-        print
-        print
-        print 'forms', forms
-        print
-        print 'form_ids', form_ids
-        print
+
+        logger.info('got forms: %s', len(forms))
 
         form_concept_ids = set(
             [ concept['id']
@@ -85,42 +84,31 @@ class ConceptAnnotator(Annotator):
             ]
         )
 
-        print 'form_concept_ids', form_concept_ids
-        print
+        logger.info('got form_concept_ids: %s', len(form_concept_ids))
 
         concepts_cursor = self.concepts_collection.find(
             { '_id' : { '$in' : list(form_concept_ids) } })
         concept_results = list(concepts_cursor)
         concepts = dict([(concept['_id'], concept) for concept in concept_results])
-        print "concepts", concepts
-        print
-
-        # self.get_all_concept_distances(concepts)
-
-        print "self.distances", self.distances
-        print
-
-        print 'concept_results', concept_results
-        print
+        logger.info('got concepts', len(concepts))
 
         forms_candidates = self.get_forms_candidates(forms, concepts)
 
-        print "forms_candidates", forms_candidates
-        print
+        logger.info('got forms_candidates: %s', len(forms_candidates))
 
         spans_candidates = self.get_spans_candidates(doc, forms_candidates)
 
-        print "spans_candidates", spans_candidates
-        print
+        logger.info('got spans_candidates: %s', len(spans_candidates))
 
         spans_candidate_vectors = self.get_spans_candidates_vectors(spans_candidates)
 
-        print "spans_candidate_vectors", spans_candidate_vectors
-        print
+        logger.info('got spans_candidate_vectors: %s', len(spans_candidate_vectors))
 
         key_spans, coy_spans = self.get_key_spans(spans_candidate_vectors)
 
+        logger.info('comparing vectors...')
         self.compare_vectors(key_spans, coy_spans)
+        logger.info('vectors compared.')
 
         resolved_spans, unresolved_spans = self.vector_score_resolver(coy_spans)
 
@@ -128,11 +116,12 @@ class ConceptAnnotator(Annotator):
                            for span, candidate_vectors in resolved_spans
                            if self.retain_resolution(candidate_vectors[0]) ]
 
-        print "resolved_spans", resolved_spans
-        print
+        logger.info('got resolved_spans: %s', len(resolved_spans))
 
         concept_spans = [ AnnoSpan(span.start, span.end, doc, label=candidate_vectors[0]['concept']['_id'])
                           for span, candidate_vectors in retained_spans ]
+
+        logger.info('got concept_spans: %s', len(concept_spans))
 
         for key_span, candidate_vectors in key_spans:
             concept_spans.append(
@@ -161,9 +150,7 @@ class ConceptAnnotator(Annotator):
         forms_candidates = defaultdict(list)
 
         for form in forms:
-            print "form", form
             for concept in form['concepts']:
-                print 'concept', concept
                 if concept['id'] in concepts:
                     forms_candidates[form['_id']].append(
                         (concept['prob'], concepts[concept['id']]))
@@ -265,8 +252,7 @@ class ConceptAnnotator(Annotator):
 
             sorted_candidates = sorted(candidates, reverse=True)
 
-            print "sorted_candidates:", sorted_candidates
-            print
+            logger.debug('got sorted_candidates: %s', len(sorted_candidates))
 
             span_candidates_vectors = []
             for prob, candidate in candidates:
@@ -310,9 +296,7 @@ class ConceptAnnotator(Annotator):
         """Is the pos tag a noun-like one?
         NN, NNS, NNP, NNPS are noun-like.
         """
-        print "ne_is_location_like", pos
         if pos in set(['NN', 'NNS', 'NNP', 'NNPS']):
-            print "TRUE"
             return True
         else:
             return False
@@ -360,33 +344,22 @@ class ConceptAnnotator(Annotator):
 
     def retain_resolution(self, vector):
 
-        print '\n\n\nretain:', vector['form'], vector['concept'], vector['vector_score'], vector['pos'], vector['named_entity']
-
         location_like = self.ne_is_location_like(vector['named_entity'])
         noun_like = self.pos_is_nounish(vector['pos'])
 
-        print 'location_like', location_like
-        print 'noun_like', noun_like
-
         if location_like:
-            print "is location-like"
             if noun_like:
-                print "is nounlike"
                 if vector['vector_score'] >= 0.2:
-                    print "True"
                     return True
             else:
                 if vector['vector_score'] >= 0.4:
-                    print "True"
                     return True
         else:
             if noun_like:
                 if vector['vector_score'] >= 0.4:
-                    print "True"
                     return True
             else:
                 if vector['vector_score'] >= 0.95:
-                    print "True"
                     return True
 
         return False
@@ -396,15 +369,14 @@ class ConceptAnnotator(Annotator):
 
         vector['vector_score'] = vector['form_concept_prob']
 
-        print "vector['form']", vector['form']
-        print "vector['concept']", vector['concept']
-        print "vector['pos']", vector['pos']
-        print "vector['named_entity']", vector['named_entity']
-        print "vector['form_concept_prob']", vector['form_concept_prob']
-        print "vector['vector_score']", vector['vector_score']
-        print "vector['key_distance_score']", vector['key_distance_score']
-        print "vector['coy_distance_score']", vector['coy_distance_score']
-        print
+        logger.debug("vector['form']", vector['form'])
+        logger.debug("vector['concept']", vector['concept'])
+        logger.debug("vector['pos']", vector['pos'])
+        logger.debug("vector['named_entity']", vector['named_entity'])
+        logger.debug("vector['form_concept_prob']", vector['form_concept_prob'])
+        logger.debug("vector['vector_score']", vector['vector_score'])
+        logger.debug("vector['key_distance_score']", vector['key_distance_score'])
+        logger.debug("vector['coy_distance_score']", vector['coy_distance_score'])
 
         return vector['vector_score']
 
