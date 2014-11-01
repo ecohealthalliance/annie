@@ -1,5 +1,10 @@
 #!/usr/bin/env python
-"""HTML tag annotator"""
+"""HTML tag annotator that creates a tiers containing the offests of all tags
+of interest from the original text.
+
+Note that this annotator must be run before all other annotators! It expects the
+AnnoDoc.text to be in HTML. And it will change AnnoDoc.text to plain text with
+no HTML tags present after it runs."""
 
 from HTMLParser import HTMLParser
 
@@ -7,8 +12,8 @@ from annotator import *
 
 import re
 
-# create a subclass and override the handler methods
 class HTMLOffsetParser(HTMLParser):
+    """Uses Python's HTMLParser to parse HTML for the tag annotator"""
 
     text = ''
     index = 0
@@ -59,13 +64,15 @@ class HTMLOffsetParser(HTMLParser):
 
 
 class HTMLTagAnnotator:
+    """Create a tier that contains the offsets of """
 
-    def __init__(self, tagset):
+    def __init__(self, tagset=None, tier_name='html'):
         if tagset is not None:
             self.tagset = [tag.lower() for tag in tagset]
         else:
             self.tagset = []
         self.tags = []
+        self.tier_name = tier_name
 
     def annotate(self, doc):
         """Annotate a document by taking the text and removing all HTML tags.
@@ -73,6 +80,13 @@ class HTMLTagAnnotator:
         annotators because it transforms doc.text, so other offsets would become
         invalid.
         """
+
+        # If there are any existing tiers, throw an error, because the offests
+        # will become invalid after we strip the HTML from the AnnoDoc.text
+
+        if len(doc.tiers) != 0:
+            raise Exception('Found pre-existing tiers; their offsets would be' +
+                'rendered invalid by stripping the AnnoDoc.text of tags')
 
         parser = HTMLOffsetParser(self.tagset)
 
@@ -87,9 +101,9 @@ class HTMLTagAnnotator:
             span.attrs = dict(tag['attrs'])
             spans.append(span)
 
-        doc.tiers['html'] = AnnoTier(spans)
+        doc.tiers[self.tier_name] = AnnoTier(spans)
         doc.text = parser.text
 
-        doc.tiers['html'].sort_spans()
+        doc.tiers[self.tier_name].sort_spans()
 
         return doc

@@ -1,5 +1,13 @@
 #!/usr/bin/env python
-"""Token Annotator"""
+"""TokenAnnotator creates an annotation tier for tokens. By default, it uses
+the NLTK regular expression tokenizer with a pattern that attempts to preserve
+http urls as single tokens.
+
+A customizer tokenization expression may also be supplied, which must take a
+string and return an iterable of token strings. Note that the tokens iterable
+ought to be in the order they are encountered in the text, or else the offests
+will not be correctly induced.
+"""
 
 import nltk
 
@@ -12,7 +20,7 @@ class TokenAnnotator(Annotator):
            list of token strings"""
         self.tokenizer = tokenizer
 
-    def annotate(self, doc):
+    def annotate(self, doc, tier_name='tokens'):
 
         tokens = self.tokenizer.tokenize(doc.text)
 

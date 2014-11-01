@@ -25,7 +25,7 @@ class SentenceAnnotatorTest(unittest.TestCase):
         self.assertEqual(self.doc.tiers['sentences'].spans[0].text, 'Hi Joe.')
         self.assertEqual(self.doc.tiers['sentences'].spans[0].label, 'Hi Joe.')
         self.assertEqual(self.doc.tiers['sentences'].spans[0].start, 0)
-        self.assertEqual(self.doc.tiers['sentences'].spans[0].end, 7)
+        self.assertEqual(self.doc.tiers['sentences'].spans[0].stop, 7)
 
     def test_two_sentences(self):
 
@@ -37,12 +37,12 @@ class SentenceAnnotatorTest(unittest.TestCase):
         self.assertEqual(self.doc.tiers['sentences'].spans[0].text, 'Hi Joe.')
         self.assertEqual(self.doc.tiers['sentences'].spans[0].label, 'Hi Joe.')
         self.assertEqual(self.doc.tiers['sentences'].spans[0].start, 0)
-        self.assertEqual(self.doc.tiers['sentences'].spans[0].end, 7)
+        self.assertEqual(self.doc.tiers['sentences'].spans[0].stop, 7)
 
         self.assertEqual(self.doc.tiers['sentences'].spans[1].text, "It's me, Jane.")
         self.assertEqual(self.doc.tiers['sentences'].spans[1].label, "It's me, Jane.")
         self.assertEqual(self.doc.tiers['sentences'].spans[1].start, 8)
-        self.assertEqual(self.doc.tiers['sentences'].spans[1].end, 22)
+        self.assertEqual(self.doc.tiers['sentences'].spans[1].stop, 22)
 
     def test_odd_spacing(self):
 
@@ -54,12 +54,12 @@ class SentenceAnnotatorTest(unittest.TestCase):
         self.assertEqual(self.doc.tiers['sentences'].spans[0].text, '  \t      Hi Joe      .')
         self.assertEqual(self.doc.tiers['sentences'].spans[0].label, '  \t      Hi Joe      .')
         self.assertEqual(self.doc.tiers['sentences'].spans[0].start, 0)
-        self.assertEqual(self.doc.tiers['sentences'].spans[0].end, 22)
+        self.assertEqual(self.doc.tiers['sentences'].spans[0].stop, 22)
 
         self.assertEqual(self.doc.tiers['sentences'].spans[1].text, "It's me, Jane   \t  .   \t  ")
         self.assertEqual(self.doc.tiers['sentences'].spans[1].label, "It's me, Jane   \t  .   \t  ")
         self.assertEqual(self.doc.tiers['sentences'].spans[1].start, 34)
-        self.assertEqual(self.doc.tiers['sentences'].spans[1].end, 60)
+        self.assertEqual(self.doc.tiers['sentences'].spans[1].stop, 60)
 
 
 if __name__ == '__main__':

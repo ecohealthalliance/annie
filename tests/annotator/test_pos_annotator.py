@@ -25,15 +25,15 @@ class POSAnnotatorTest(unittest.TestCase):
 
         self.assertEqual(self.doc.tiers['pos'].spans[0].label, 'NNP')
         self.assertEqual(self.doc.tiers['pos'].spans[0].start, 0)
-        self.assertEqual(self.doc.tiers['pos'].spans[0].end, 2)
+        self.assertEqual(self.doc.tiers['pos'].spans[0].stop, 2)
 
         self.assertEqual(self.doc.tiers['pos'].spans[1].label, 'NNP')
         self.assertEqual(self.doc.tiers['pos'].spans[1].start, 3)
-        self.assertEqual(self.doc.tiers['pos'].spans[1].end, 6)
+        self.assertEqual(self.doc.tiers['pos'].spans[1].stop, 6)
 
         self.assertEqual(self.doc.tiers['pos'].spans[2].label, '.')
         self.assertEqual(self.doc.tiers['pos'].spans[2].start, 6)
-        self.assertEqual(self.doc.tiers['pos'].spans[2].end, 7)
+        self.assertEqual(self.doc.tiers['pos'].spans[2].stop, 7)
 
     def test_initial_space(self):
 
@@ -46,11 +46,11 @@ class POSAnnotatorTest(unittest.TestCase):
 
         self.assertEqual(self.doc.tiers['pos'].spans[0].label, 'NNP')
         self.assertEqual(self.doc.tiers['pos'].spans[0].start, 1)
-        self.assertEqual(self.doc.tiers['pos'].spans[0].end, 3)
+        self.assertEqual(self.doc.tiers['pos'].spans[0].stop, 3)
 
         self.assertEqual(self.doc.tiers['pos'].spans[1].label, '.')
         self.assertEqual(self.doc.tiers['pos'].spans[1].start, 3)
-        self.assertEqual(self.doc.tiers['pos'].spans[1].end, 4)
+        self.assertEqual(self.doc.tiers['pos'].spans[1].stop, 4)
 
     def test_multiple_spaces_in_a_row(self):
 
@@ -64,22 +64,22 @@ class POSAnnotatorTest(unittest.TestCase):
         self.assertEqual(self.doc.tiers['pos'].spans[0].label, 'NNP')
         self.assertEqual(self.doc.tiers['pos'].spans[0].text, 'Hi')
         self.assertEqual(self.doc.tiers['pos'].spans[0].start, 9)
-        self.assertEqual(self.doc.tiers['pos'].spans[0].end, 11)
+        self.assertEqual(self.doc.tiers['pos'].spans[0].stop, 11)
 
         self.assertEqual(self.doc.tiers['pos'].spans[1].label, 'EX')
         self.assertEqual(self.doc.tiers['pos'].spans[1].text, 'there')
         self.assertEqual(self.doc.tiers['pos'].spans[1].start, 13)
-        self.assertEqual(self.doc.tiers['pos'].spans[1].end, 18)
+        self.assertEqual(self.doc.tiers['pos'].spans[1].stop, 18)
 
         self.assertEqual(self.doc.tiers['pos'].spans[2].label, 'NNP')
         self.assertEqual(self.doc.tiers['pos'].spans[2].text, 'Joe')
         self.assertEqual(self.doc.tiers['pos'].spans[2].start, 24)
-        self.assertEqual(self.doc.tiers['pos'].spans[2].end, 27)
+        self.assertEqual(self.doc.tiers['pos'].spans[2].stop, 27)
 
         self.assertEqual(self.doc.tiers['pos'].spans[3].label, '.')
         self.assertEqual(self.doc.tiers['pos'].spans[3].text, '.')
         self.assertEqual(self.doc.tiers['pos'].spans[3].start, 29)
-        self.assertEqual(self.doc.tiers['pos'].spans[3].end, 30)
+        self.assertEqual(self.doc.tiers['pos'].spans[3].stop, 30)
 
 
 if __name__ == '__main__':

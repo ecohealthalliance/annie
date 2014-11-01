@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Sentnece Annotator"""
+"""SentneceAnnotator creates an annotation tier for sentenecs, by default using
+the nltk sent_tokenize method."""
 
 from nltk import sent_tokenize
 

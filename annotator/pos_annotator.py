@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Part of speech tag annotator"""
+"""Part of speech tag annotator that creates a tier of part of speech
+annotations, by default using the NLTK pos_tag method."""
 
 import nltk
 
@@ -13,7 +14,7 @@ class POSAnnotator(Annotator):
            a list of tuples(token: str, pos: str)"""
         self.tag = tag
 
-    def annotate(self, doc):
+    def annotate(self, doc, tier_name='pos'):
 
         if not 'tokens' in doc.tiers:
             token_annotator = TokenAnnotator()
@@ -21,9 +22,9 @@ class POSAnnotator(Annotator):
 
         pos_tags = self.tag(doc.tiers['tokens'].labels())
 
-        pos_spans = [AnnoSpan(span.start, span.end, doc, label=tag[1])
+        pos_spans = [AnnoSpan(span.start, span.stop, doc, label=tag[1])
                      for tag, span in zip(pos_tags, doc.tiers['tokens'].spans)]
 
-        doc.tiers['pos'] = AnnoTier(pos_spans)
+        doc.tiers[tier_name] = AnnoTier(pos_spans)
 
         return doc

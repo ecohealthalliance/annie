@@ -42,7 +42,7 @@ class HTMLTagAnnotatorTest(unittest.TestCase):
         self.assertEqual(doc.tiers['html'].spans[0].label, 'b')
         self.assertEqual(doc.tiers['html'].spans[0].text, 'squirrel')
         self.assertEqual(doc.tiers['html'].spans[0].start, 8)
-        self.assertEqual(doc.tiers['html'].spans[0].end, 16)
+        self.assertEqual(doc.tiers['html'].spans[0].stop, 16)
 
     def test_tightly_nested(self):
 
@@ -59,12 +59,12 @@ class HTMLTagAnnotatorTest(unittest.TestCase):
         self.assertEqual(doc.tiers['html'].spans[0].label, 'i')
         self.assertEqual(doc.tiers['html'].spans[0].text, 'dog')
         self.assertEqual(doc.tiers['html'].spans[0].start, 11)
-        self.assertEqual(doc.tiers['html'].spans[0].end, 14)
+        self.assertEqual(doc.tiers['html'].spans[0].stop, 14)
 
         self.assertEqual(doc.tiers['html'].spans[1].label, 'b')
         self.assertEqual(doc.tiers['html'].spans[1].text, 'dog')
         self.assertEqual(doc.tiers['html'].spans[1].start, 11)
-        self.assertEqual(doc.tiers['html'].spans[1].end, 14)
+        self.assertEqual(doc.tiers['html'].spans[1].stop, 14)
 
     def test_loosely_nested(self):
 
@@ -81,12 +81,12 @@ class HTMLTagAnnotatorTest(unittest.TestCase):
         self.assertEqual(doc.tiers['html'].spans[0].label, 'b')
         self.assertEqual(doc.tiers['html'].spans[0].text, 'big old dog')
         self.assertEqual(doc.tiers['html'].spans[0].start, 11)
-        self.assertEqual(doc.tiers['html'].spans[0].end, 22)
+        self.assertEqual(doc.tiers['html'].spans[0].stop, 22)
 
         self.assertEqual(doc.tiers['html'].spans[1].label, 'i')
         self.assertEqual(doc.tiers['html'].spans[1].text, 'dog')
         self.assertEqual(doc.tiers['html'].spans[1].start, 19)
-        self.assertEqual(doc.tiers['html'].spans[1].end, 22)
+        self.assertEqual(doc.tiers['html'].spans[1].stop, 22)
 
     def test_paragraph_with_space(self):
 
@@ -103,12 +103,12 @@ class HTMLTagAnnotatorTest(unittest.TestCase):
         self.assertEqual(doc.tiers['html'].spans[0].label, 'p')
         self.assertEqual(doc.tiers['html'].spans[0].text, 'There is a fish under the tree.')
         self.assertEqual(doc.tiers['html'].spans[0].start, 0)
-        self.assertEqual(doc.tiers['html'].spans[0].end, 31)
+        self.assertEqual(doc.tiers['html'].spans[0].stop, 31)
 
         self.assertEqual(doc.tiers['html'].spans[1].label, 'p')
         self.assertEqual(doc.tiers['html'].spans[1].text, 'How odd!')
         self.assertEqual(doc.tiers['html'].spans[1].start, 32)
-        self.assertEqual(doc.tiers['html'].spans[1].end, 40)
+        self.assertEqual(doc.tiers['html'].spans[1].stop, 40)
 
 
     def test_paragraph_without_space(self):
@@ -126,12 +126,12 @@ class HTMLTagAnnotatorTest(unittest.TestCase):
         self.assertEqual(doc.tiers['html'].spans[0].label, 'p')
         self.assertEqual(doc.tiers['html'].spans[0].text, 'There is a fish under the tree.')
         self.assertEqual(doc.tiers['html'].spans[0].start, 0)
-        self.assertEqual(doc.tiers['html'].spans[0].end, 31)
+        self.assertEqual(doc.tiers['html'].spans[0].stop, 31)
 
         self.assertEqual(doc.tiers['html'].spans[1].label, 'p')
         self.assertEqual(doc.tiers['html'].spans[1].text, 'How odd!')
         self.assertEqual(doc.tiers['html'].spans[1].start, 32)
-        self.assertEqual(doc.tiers['html'].spans[1].end, 40)
+        self.assertEqual(doc.tiers['html'].spans[1].stop, 40)
 
     def test_attrs(self):
 
@@ -149,7 +149,7 @@ class HTMLTagAnnotatorTest(unittest.TestCase):
         self.assertEqual(doc.tiers['html'].spans[0].text, 'here')
         self.assertEqual(doc.tiers['html'].spans[0].attrs['href'], 'http://sample.com')
         self.assertEqual(doc.tiers['html'].spans[0].start, 6)
-        self.assertEqual(doc.tiers['html'].spans[0].end, 10)
+        self.assertEqual(doc.tiers['html'].spans[0].stop, 10)
 
 
 if __name__ == '__main__':

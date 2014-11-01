@@ -1,12 +1,13 @@
 #!/usr/bin/env python
-"""Named entity annotator"""
+"""NLTKNEAnnotator creates an annotation tier of named entities using the
+NLTK named entity chunker."""
 
 import nltk
 
 from annotator import *
 from pos_annotator import POSAnnotator
 
-class NEAnnotator(Annotator):
+class NLTKNEAnnotator(Annotator):
 
     def __init__(self, tag=nltk.ne_chunk):
         """tagger should be a function that takes a list of strings and returns
@@ -28,7 +29,7 @@ class NEAnnotator(Annotator):
         for tag in ne_tags:
             if type(tag) is nltk.tree.Tree:
                 ne_spans.append(AnnoSpan(token_spans[span_id].start,
-                                     token_spans[span_id + len(tag.leaves()) - 1].end,
+                                     token_spans[span_id + len(tag.leaves()) - 1].stop,
                                      doc,
                                      label=tag.label()))
                 span_id += len(tag.leaves())
