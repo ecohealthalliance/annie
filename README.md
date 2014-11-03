@@ -31,11 +31,11 @@ The `AnnoDoc` stores the text of the document in the `text` property. Annotation
 
 The contents of an `AnnoTier` is stored in the `spans` property, which is a list of `AnnoSpans` in the order encountered in the document. Every `AnnoSpan` has at least six properties:
 
-    * `start`: the byte offset where the span begins
-    * `stop`: the byte offset where the span ends
-    * `text`: the exact text of the document from `start` to `stop`.
-    * `label`: the value of the annotation, often just the `text` of the span in the document, as for a token annotation. For a part-of-speech annotation, for example, the label would be "NN", "VB" or another part-of-speech label.
-    * `doc`: a reference to the `AnnoDoc` to which the span belongs
+* `start`: the byte offset where the span begins
+* `stop`: the byte offset where the span ends
+* `text`: the exact text of the document from `start` to `stop`.
+* `label`: the value of the annotation, often just the `text` of the span in the document, as for a token annotation. For a part-of-speech annotatifor example, the label would be "NN", "VB" or another part-of-speech label.
+* `doc`: a reference to the `AnnoDoc` to which the span belongs
 
 ```python
     print doc.tiers['tokens'].spans[0].start
