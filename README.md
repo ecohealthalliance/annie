@@ -10,39 +10,47 @@ Annie is designed to provide a simple solution to a common need: add layers of l
 
 The container for an entire annotated document is the `AnnoDoc`. It can be created by simple instantion, with or without its text as an argument to the constructor:
 
+```python
     from annotator import annotator
     doc = annotator.AnnoDoc()
     doc.text = 'It was the epoch of belief, it was the epoch of incredulity.'
     # or
     doc = annotator.AnnoDoc('It was the epoch of belief, it was the epoch of incredulity')
+```
 
 The `AnnoDoc` stores the text of the document in the `text` property. Annotations are organized in tiers according to their kind and source. Tiers are stored by name in a dict in the `tiers` property of the doc. Tiers are created by `Annotator` instances, which create annotations on the basis of the `text` and / or the information already present in other tiers. For example, a token annotator works from the text, while an n-gram annotator works on the token tier already created by the token annotator. Most of the included NLP annotators use NLTK methods by default, but can be changed to use other methods.
 
+```python
     from annotator.token_annotator import TokenAnnotator
     from annotator.ngram_annotator import NgramAnnotator
     token_annotator = TokenAnnotator()
     token_annotator.annotate(doc)
     ngram_annotator = NgramAnnotator()
     ngram_annotator.annotate(doc)
+```
 
 The contents of an `AnnoTier` is stored in the `spans` property, which is a list of `AnnoSpans` in the order encountered in the document. Every `AnnoSpan` has at least six properties:
+
     * `start`: the byte offset where the span begins
     * `stop`: the byte offset where the span ends
     * `text`: the exact text of the document from `start` to `stop`.
     * `label`: the value of the annotation, often just the `text` of the span in the document, as for a token annotation. For a part-of-speech annotation, for example, the label would be "NN", "VB" or another part-of-speech label.
     * `doc`: a reference to the `AnnoDoc` to which the span belongs
 
+```python
     print doc.tiers['tokens'].spans[0].start
     print doc.tiers['tokens'].spans[0].stop
     print doc.tiers['tokens'].spans[0].text
     print doc.tiers['3grams'].spans[3].start
     print doc.tiers['3grams'].spans[3].stop
     print doc.tiers['3grams'].spans[3].text
+```
 
 ## Implementing a new annotator
 
 To create your own annotator, inherit from `Annotator` and implement `annotate` such that you add a new annotation tier to `doc`. Here's an example of a trivial annotator that creates an annotation tier whose span labels are the length of the corresponding tokens in the text.
 
+```python
     class TokenLengthAnnotator(Annotator):
 
         def annotate(self, doc, tier_name='token_length'):
@@ -62,3 +70,4 @@ To create your own annotator, inherit from `Annotator` and implement `annotate` 
 
     tl_annotator = TokenLengthAnnotator()
     tl_annotator.annotate(doc)
+```
