@@ -366,7 +366,7 @@ class PatientInfoAnnotatorTest(unittest.TestCase):
                 'number': 16439
             }
         })
-    
+
     def test_false_counts_with_of(self):
         doc = AnnoDoc("one group of patients")
         doc.add_tier(self.annotator)
@@ -406,10 +406,26 @@ class PatientInfoAnnotatorTest(unittest.TestCase):
          ��� ����� ����������, �����-���� �������������� ������������� ����, ��� ������ ��� ���.....  ������ �������...
         """)
         doc.add_tier(self.annotator)
-    
+
     def test_match_long_ellipsis2(self):
         doc = AnnoDoc(u"""They will also be used to give the all-clear for Ebola patients who survive the disease...""")
         doc.add_tier(self.annotator)
-        
+
+    def test_overlapping_age_and_time(self):
+        """Don't parse an age and a time span from the same source."""
+        from annotator.jvm_nlp_annotator import JVMNLPAnnotator
+        from annotator.keyword_annotator import KeywordAnnotator
+
+        doc = AnnoDoc("""A 35-year-old farmer was admitted to the hospital""")
+        doc.add_tier(KeywordAnnotator())
+        doc.add_tier(JVMNLPAnnotator(['times']))
+        doc.add_tier(self.annotator, keyword_categories={
+            'time' : doc.tiers['times'].spans,
+        })
+
+        self.assertEqual(len(doc.tiers['patientInfo'].spans), 1)
+        self.assertTrue('time' not in doc.tiers['patientInfo'].spans[0].metadata)
+
+
 if __name__ == '__main__':
     unittest.main()
