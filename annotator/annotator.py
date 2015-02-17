@@ -335,11 +335,57 @@ class AnnoSpan(object):
         else:
             self.label = label
 
+    def same(self, other_span):
+        return ( self.start == other_span.start and
+                 self.end == other_span.end and
+                 self.label == other_span.label )
+
     def overlaps(self, other_span):
         return (
             (self.start >= other_span.start and self.start <= other_span.end) or
             (other_span.start >= self.start and other_span.start <= self.end)
         )
+
+    def contains(self, other_span):
+        """Does this span wholly contain the other span?"""
+        return (self.start <= other_span.start and other_span.end <= self.end)
+
+    def containing_span_in_tier(self, tier_name):
+        """Get the first span, if any, from another tier that wholly encompasses this span"""
+        for span in self.doc.tiers[tier_name].spans:
+            if span.contains(self):
+                return span
+        return None
+
+    def contained_spans_in_tier(self, tier_name):
+        """Get all spans from another tier that lie wholly within this span"""
+        return [ span for span in self.doc.tiers[tier_name].spans
+                 if self.contains(span) ]
+
+    def nearest_in_tier(self, tier_name):
+        """Get the span that starts closest to this one in another tier"""
+        for span in self.doc.tiers[tier_name].spans:
+            if span.start >= self.start:
+                return span
+        return None
+
+    def span_distance(self, other_span, tier_name):
+        distance = 0
+        count = False
+        for span in self.doc.tiers[tier_name].spans:
+            if span.same(self) or span.same(other_span):
+                if count:
+                    return distance
+                else:
+                    count = True
+            elif count:
+                distance += 1
+
+    def token_distance(self, other_span):
+        """The number of tokens interceding between this span and another"""
+        token_span = self.nearest_in_tier('tokens')
+        other_token_span = other_span.nearest_in_tier('tokens')
+        return token_span.span_distance(other_token_span, 'tokens')
 
     def adjacent_to(self, other_span, max_dist=0):
         return (
