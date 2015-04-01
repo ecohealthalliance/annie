@@ -6,7 +6,6 @@ import re
 from lazy import lazy
 from collections import defaultdict
 
-import pattern
 import utils
 
 class Annotator(object):
