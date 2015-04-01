@@ -7,7 +7,9 @@ If HTML tags are removed, certain tags might be transferred to an AnnoTier.
 """
 
 import yaml
-import BeautifulSoup
+# import BeautifulSoup
+# BeautifulSoup doesn't seem to be loaded.
+# And anyway, isn't it `from bs4 import BeautifulSoup`?
 
 from .annotator import AnnoDoc
 from .html_tag_annotator import HTMLTagAnnotator
