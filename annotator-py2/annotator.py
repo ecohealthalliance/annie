@@ -22,10 +22,10 @@ class AnnoDoc(object):
     """Container for document text and associated AnnoTiers"""
 
     def __init__(self, text=None):
-        if type(text) is str or text:
+        if type(text) is unicode or text:
             self.text = text
         elif type(text) is str:
-            self.text = str(text, 'utf8')
+            self.text = unicode(text, 'utf8')
         elif text is not None:
             raise TypeError("text must be string or unicode")
         self.tiers = {}
@@ -48,7 +48,7 @@ class AnnoDoc(object):
             json_obj['properties'] = self.properties
 
         json_obj['tiers'] = {}
-        for name, tier in self.tiers.items():
+        for name, tier in self.tiers.iteritems():
             json_obj['tiers'][name] = tier.to_json()
 
         return json.dumps(json_obj)
@@ -66,7 +66,7 @@ class AnnoDoc(object):
         set approach to do this instead."""
 
         if not tier_names:
-            tiers = list(self.tiers.keys())
+            tiers = self.tiers.keys()
 
         removed_spans_indexes = defaultdict(list)
 
@@ -113,7 +113,7 @@ class AnnoTier(object):
             self.spans = spans
 
     def __repr__(self):
-        return str([str(span) for span in self.spans])
+        return unicode([unicode(span) for span in self.spans])
 
     def __len__(self):
         return len(self.spans)
@@ -139,16 +139,19 @@ class AnnoTier(object):
     def spans_over(self, start, end=None):
         """Get all spans which overlap a position or range"""
         if not end: end = start + 1
-        return [span for span in self.spans if len(set(range(span.start, span.stop)).
-                                       intersection(list(range(start, end)))) > 0]
+        return filter(lambda span: len(set(range(span.start, span.stop)).
+                                       intersection(range(start, end))) > 0,
+                      self.spans)
 
     def spans_in(self, start, end):
         """Get all spans which are contained in a range"""
-        return [span for span in self.spans if span.start >= start and span.stop <= end]
+        return filter(lambda span: span.start >= start and span.stop <= end,
+                      self.spans)
 
     def spans_at(self, start, end):
         """Get all spans with certain start and end positions"""
-        return [span for span in self.spans if start == span.start and end == span.stop]
+        return filter(lambda span: start == span.start and end == span.stop,
+                      self.spans)
 
     def spans_over_span(self, span):
         """Get all spans which overlap another span"""
@@ -164,7 +167,7 @@ class AnnoTier(object):
 
     def spans_with_label(self, label):
         """Get all spans which have a given label"""
-        return [span for span in self.spans if span.label == label]
+        return filter(lambda span: span.label == label, self.spans)
 
     def labels(self):
         """Get a list of all labels in this tier"""
@@ -209,7 +212,7 @@ class AnnoTier(object):
 class AnnoSpan(object):
 
     def __repr__(self):
-        return '{0}-{1}:{2}'.format(self.start, self.stop, self.label)
+        return u'{0}-{1}:{2}'.format(self.start, self.stop, self.label)
 
     def __init__(self, start, stop, doc, label=None):
         self.start = start

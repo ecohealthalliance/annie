@@ -1,0 +1,183 @@
+--- annotator-py2/annotator.py	(original)
++++ annotator-py2/annotator.py	(refactored)
+@@ -22,10 +22,10 @@
+     """Container for document text and associated AnnoTiers"""
+ 
+     def __init__(self, text=None):
+-        if type(text) is unicode or text:
++        if type(text) is str or text:
+             self.text = text
+         elif type(text) is str:
+-            self.text = unicode(text, 'utf8')
++            self.text = str(text, 'utf8')
+         elif text is not None:
+             raise TypeError("text must be string or unicode")
+         self.tiers = {}
+@@ -48,7 +48,7 @@
+             json_obj['properties'] = self.properties
+ 
+         json_obj['tiers'] = {}
+-        for name, tier in self.tiers.iteritems():
++        for name, tier in self.tiers.items():
+             json_obj['tiers'][name] = tier.to_json()
+ 
+         return json.dumps(json_obj)
+@@ -66,7 +66,7 @@
+         set approach to do this instead."""
+ 
+         if not tier_names:
+-            tiers = self.tiers.keys()
++            tiers = list(self.tiers.keys())
+ 
+         removed_spans_indexes = defaultdict(list)
+ 
+@@ -113,7 +113,7 @@
+             self.spans = spans
+ 
+     def __repr__(self):
+-        return unicode([unicode(span) for span in self.spans])
++        return str([str(span) for span in self.spans])
+ 
+     def __len__(self):
+         return len(self.spans)
+@@ -139,19 +139,16 @@
+     def spans_over(self, start, end=None):
+         """Get all spans which overlap a position or range"""
+         if not end: end = start + 1
+-        return filter(lambda span: len(set(range(span.start, span.stop)).
+-                                       intersection(range(start, end))) > 0,
+-                      self.spans)
++        return [span for span in self.spans if len(set(range(span.start, span.stop)).
++                                       intersection(list(range(start, end)))) > 0]
+ 
+     def spans_in(self, start, end):
+         """Get all spans which are contained in a range"""
+-        return filter(lambda span: span.start >= start and span.stop <= end,
+-                      self.spans)
++        return [span for span in self.spans if span.start >= start and span.stop <= end]
+ 
+     def spans_at(self, start, end):
+         """Get all spans with certain start and end positions"""
+-        return filter(lambda span: start == span.start and end == span.stop,
+-                      self.spans)
++        return [span for span in self.spans if start == span.start and end == span.stop]
+ 
+     def spans_over_span(self, span):
+         """Get all spans which overlap another span"""
+@@ -167,7 +164,7 @@
+ 
+     def spans_with_label(self, label):
+         """Get all spans which have a given label"""
+-        return filter(lambda span: span.label == label, self.spans)
++        return [span for span in self.spans if span.label == label]
+ 
+     def labels(self):
+         """Get a list of all labels in this tier"""
+@@ -212,7 +209,7 @@
+ class AnnoSpan(object):
+ 
+     def __repr__(self):
+-        return u'{0}-{1}:{2}'.format(self.start, self.stop, self.label)
++        return '{0}-{1}:{2}'.format(self.start, self.stop, self.label)
+ 
+     def __init__(self, start, stop, doc, label=None):
+         self.start = start
+--- annotator-py2/html_tag_annotator.py	(original)
++++ annotator-py2/html_tag_annotator.py	(refactored)
+@@ -6,9 +6,9 @@
+ AnnoDoc.text to be in HTML. And it will change AnnoDoc.text to plain text with
+ no HTML tags present after it runs."""
+ 
+-from HTMLParser import HTMLParser
++from html.parser import HTMLParser
+ 
+-from annotator import *
++from .annotator import *
+ 
+ import re
+ 
+--- annotator-py2/loader.py	(original)
++++ annotator-py2/loader.py	(refactored)
+@@ -9,8 +9,8 @@
+ import yaml
+ import BeautifulSoup
+ 
+-from annotator import AnnoDoc
+-from html_tag_annotator import HTMLTagAnnotator
++from .annotator import AnnoDoc
++from .html_tag_annotator import HTMLTagAnnotator
+ 
+ 
+ class Loader():
+--- annotator-py2/ngram_annotator.py	(original)
++++ annotator-py2/ngram_annotator.py	(refactored)
+@@ -5,8 +5,8 @@
+ in the order encountered in the text. If the 'tokens' tier is absent, the
+ default TokenAnnotator will be used to create one."""
+ 
+-from annotator import *
+-from token_annotator import TokenAnnotator
++from .annotator import *
++from .token_annotator import TokenAnnotator
+ 
+ class NgramAnnotator(Annotator):
+ 
+--- annotator-py2/nltk_ne_annotator.py	(original)
++++ annotator-py2/nltk_ne_annotator.py	(refactored)
+@@ -4,8 +4,8 @@
+ 
+ import nltk
+ 
+-from annotator import *
+-from pos_annotator import POSAnnotator
++from .annotator import *
++from .pos_annotator import POSAnnotator
+ 
+ class NLTKNEAnnotator(Annotator):
+ 
+@@ -20,7 +20,7 @@
+             pos_annotator = POSAnnotator()
+             doc.add_tier(pos_annotator)
+ 
+-        ne_tags = self.tag(zip(doc.tiers['tokens'].labels(), doc.tiers['pos'].labels()))
++        ne_tags = self.tag(list(zip(doc.tiers['tokens'].labels(), doc.tiers['pos'].labels())))
+ 
+         ne_spans = []
+ 
+--- annotator-py2/pos_annotator.py	(original)
++++ annotator-py2/pos_annotator.py	(refactored)
+@@ -4,8 +4,8 @@
+ 
+ import nltk
+ 
+-from annotator import *
+-from token_annotator import TokenAnnotator
++from .annotator import *
++from .token_annotator import TokenAnnotator
+ 
+ class POSAnnotator(Annotator):
+ 
+--- annotator-py2/sentence_annotator.py	(original)
++++ annotator-py2/sentence_annotator.py	(refactored)
+@@ -4,8 +4,8 @@
+ 
+ from nltk import sent_tokenize
+ 
+-from annotator import *
+-from token_annotator import TokenAnnotator
++from .annotator import *
++from .token_annotator import TokenAnnotator
+ 
+ class SentenceAnnotator(Annotator):
+ 
+--- annotator-py2/token_annotator.py	(original)
++++ annotator-py2/token_annotator.py	(refactored)
+@@ -11,7 +11,7 @@
+ 
+ import nltk
+ 
+-from annotator import *
++from .annotator import *
+ 
+ class TokenAnnotator(Annotator):
+ 

@@ -11,7 +11,7 @@ will not be correctly induced.
 
 import nltk
 
-from .annotator import *
+from annotator import *
 
 class TokenAnnotator(Annotator):
 

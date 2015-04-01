@@ -4,8 +4,8 @@ annotations, by default using the NLTK pos_tag method."""
 
 import nltk
 
-from .annotator import *
-from .token_annotator import TokenAnnotator
+from annotator import *
+from token_annotator import TokenAnnotator
 
 class POSAnnotator(Annotator):
 

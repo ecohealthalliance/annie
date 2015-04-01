@@ -5,8 +5,8 @@ expects a tier named 'tokens' to exist and to contain spans labeled with tokens
 in the order encountered in the text. If the 'tokens' tier is absent, the
 default TokenAnnotator will be used to create one."""
 
-from .annotator import *
-from .token_annotator import TokenAnnotator
+from annotator import *
+from token_annotator import TokenAnnotator
 
 class NgramAnnotator(Annotator):
 

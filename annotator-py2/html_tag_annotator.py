@@ -6,9 +6,9 @@ Note that this annotator must be run before all other annotators! It expects the
 AnnoDoc.text to be in HTML. And it will change AnnoDoc.text to plain text with
 no HTML tags present after it runs."""
 
-from html.parser import HTMLParser
+from HTMLParser import HTMLParser
 
-from .annotator import *
+from annotator import *
 
 import re
 

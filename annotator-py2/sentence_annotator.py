@@ -4,8 +4,8 @@ the nltk sent_tokenize method."""
 
 from nltk import sent_tokenize
 
-from .annotator import *
-from .token_annotator import TokenAnnotator
+from annotator import *
+from token_annotator import TokenAnnotator
 
 class SentenceAnnotator(Annotator):
 
