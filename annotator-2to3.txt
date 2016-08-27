@@ -1,0 +1,397 @@
+--- annotator-py2/annotator.py	(original)
++++ annotator-py2/annotator.py	(refactored)
+@@ -9,9 +9,9 @@
+ from nltk import sent_tokenize
+ 
+ import pattern
+-import utils
+-
+-import maximum_weight_interval_set as mwis
++from . import utils
++
++from . import maximum_weight_interval_set as mwis
+ 
+ def tokenize(text):
+     return sent_tokenize(text)
+@@ -28,15 +28,15 @@
+     # stripped of tags? This will ruin offsets.
+ 
+     def __init__(self, text=None, date=None):
+-        if type(text) is unicode:
++        if type(text) is str:
+             self.text = text
+         elif type(text) is str:
+-            self.text = unicode(text, 'utf8')
++            self.text = str(text, 'utf8')
+         else:
+             raise TypeError("text must be string or unicode")
+         # Replacing the unicode dashes is done to avoid this pattern bug:
+         # https://github.com/clips/pattern/issues/104
+--- annotator-py2/case_count_annotator.py	(original)
++++ annotator-py2/case_count_annotator.py	(refactored)
+@@ -7,9 +7,9 @@
+ 
+ import pattern.search, pattern.en
+ 
+-from annotator import *
++from .annotator import *
+ 
+-import utils
++from . import utils
+ 
+ cumulative_pattern = re.compile('|'.join(["total", "sum", "brings to", "in all", "already"]), re.I)
+ def find_cumulative_keywords(text, start_offset, stop_offset):
+--- annotator-py2/geoname_annotator.py	(original)
++++ annotator-py2/geoname_annotator.py	(refactored)
+@@ -6,11 +6,11 @@
+ from pymongo import MongoClient
+ import os
+ 
+-from annotator import *
+-from ngram_annotator import NgramAnnotator
+-from ne_annotator import NEAnnotator
++from .annotator import *
++from .ngram_annotator import NgramAnnotator
++from .ne_annotator import NEAnnotator
+ from geopy.distance import great_circle
+-from maximum_weight_interval_set import Interval, find_maximum_weight_interval_set
++from .maximum_weight_interval_set import Interval, find_maximum_weight_interval_set
+ 
+ import datetime
+ import logging
+@@ -180,7 +180,7 @@
+                 span_to_locations[span] =\
+                     span_to_locations.get(span, []) + [location]
+         for span_a, span_b in itertools.permutations(
+-            span_to_locations.keys(), 2
++            list(span_to_locations.keys()), 2
+         ):
+             if not span_a.comes_before(span_b, max_dist=4): continue
+             if (
+@@ -433,12 +433,12 @@
+                 return 40 + max_containment_level * 10
+ 
+         def feature_code_score():
+-            for code, score in {
++            for code, score in list({
+                 # Continent (need this bc Africa has 0 population)
+                 'CONT' : 100,
+                 'ADM' : 80,
+                 'PPL' : 65,
+-            }.items():
++            }.items()):
+                 if candidate['feature code'].startswith(code):
+                     return score
+             return 0
+@@ -472,20 +472,20 @@
+         }
+         total_score = sum([
+             score_fun() * float(weight)
+-            for score_fun, weight in feature_weights.items()
+-        ]) / math.sqrt(sum([x**2 for x in feature_weights.values()]))
++            for score_fun, weight in list(feature_weights.items())
++        ]) / math.sqrt(sum([x**2 for x in list(feature_weights.values())]))
+ 
+         # This is just for debugging, put FP and FN ids here to see
+         # their score.
+         if candidate['geonameid'] in ['372299', '8060879', '408664', '377268']:
+-            print (
++            print((
+                 candidate['name'],
+                 list(candidate['spans'])[0].text,
+                 total_score
+-            )
+-            print {
++            ))
++            print({
+                 score_fun.__name__ : score_fun()
+-                for score_fun, weight in feature_weights.items()
+-            }
++                for score_fun, weight in list(feature_weights.items())
++            })
+ 
+         return total_score
+--- annotator-py2/geoname_human_tag_annotator.py	(original)
++++ annotator-py2/geoname_human_tag_annotator.py	(refactored)
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python
+ """Token Annotator"""
+ 
+-from annotator import *
++from .annotator import *
+ 
+ import re
+ 
+--- annotator-py2/html_tag_annotator.py	(original)
++++ annotator-py2/html_tag_annotator.py	(refactored)
+@@ -1,9 +1,9 @@
+ #!/usr/bin/env python
+ """HTML tag annotator"""
+ 
+-from HTMLParser import HTMLParser
++from html.parser import HTMLParser
+ 
+-from annotator import *
++from .annotator import *
+ 
+ import re
+ 
+--- annotator-py2/jvm_nlp_annotator.py	(original)
++++ annotator-py2/jvm_nlp_annotator.py	(refactored)
+@@ -6,8 +6,8 @@
+ 
+ import requests
+ 
+-from annotator import *
+-from time_expressions import *
++from .annotator import *
++from .time_expressions import *
+ 
+ class StanfordSpan(AnnoSpan):
+ 
+--- annotator-py2/keyword_annotator.py	(original)
++++ annotator-py2/keyword_annotator.py	(refactored)
+@@ -7,8 +7,8 @@
+ from pymongo import MongoClient
+ import os
+ 
+-from annotator import *
+-from ngram_annotator import NgramAnnotator
++from .annotator import *
++from .ngram_annotator import NgramAnnotator
+ 
+ class KeywordAnnotator(Annotator):
+ 
+@@ -43,9 +43,9 @@
+         for ngram_span in doc.tiers['ngrams'].spans:
+             ngram_spans_by_lowercase[ngram_span.text.lower()].append(ngram_span)
+ 
+-        ngrams = ngram_spans_by_lowercase.keys()
++        ngrams = list(ngram_spans_by_lowercase.keys())
+ 
+-        for keyword_type, keywords in self.keywords.iteritems():
++        for keyword_type, keywords in self.keywords.items():
+ 
+             keyword_spans = []
+             for keyword in set(keywords.keys()).intersection(ngrams):
+--- annotator-py2/loader.py	(original)
++++ annotator-py2/loader.py	(refactored)
+@@ -9,8 +9,8 @@
+ import yaml
+ import BeautifulSoup
+ 
+-from annotator import AnnoDoc
+-from html_tag_annotator import HTMLTagAnnotator
++from .annotator import AnnoDoc
++from .html_tag_annotator import HTMLTagAnnotator
+ 
+ 
+ class Loader():
+--- annotator-py2/ne_annotator.py	(original)
++++ annotator-py2/ne_annotator.py	(refactored)
+@@ -3,8 +3,8 @@
+ 
+ import nltk
+ 
+-from annotator import *
+-from pos_annotator import POSAnnotator
++from .annotator import *
++from .pos_annotator import POSAnnotator
+ 
+ class NEAnnotator(Annotator):
+ 
+@@ -19,7 +19,7 @@
+             pos_annotator = POSAnnotator()
+             doc.add_tier(pos_annotator)
+ 
+-        ne_tags = self.tag(zip(doc.tiers['tokens'].labels(), doc.tiers['pos'].labels()))
++        ne_tags = self.tag(list(zip(doc.tiers['tokens'].labels(), doc.tiers['pos'].labels())))
+ 
+         ne_spans = []
+ 
+--- annotator-py2/ngram_annotator.py	(original)
++++ annotator-py2/ngram_annotator.py	(refactored)
+@@ -1,8 +1,8 @@
+ #!/usr/bin/env python
+ """Ngram Annotator"""
+ 
+-from annotator import *
+-from token_annotator import TokenAnnotator
++from .annotator import *
++from .token_annotator import TokenAnnotator
+ 
+ class NgramAnnotator(Annotator):
+ 
+--- annotator-py2/patient_info_annotator.py	(original)
++++ annotator-py2/patient_info_annotator.py	(refactored)
+@@ -5,13 +5,13 @@
+ import re
+ from collections import defaultdict
+ 
+-from annotator import *
+-import result_aggregators as ra
+-import utils
++from .annotator import *
++from . import result_aggregators as ra
++from . import utils
+ 
+ def process_match_dict(d):
+     numeric_keys = ['number', 'min', 'max', 'range_start', 'range_end']
+-    for k, v in d.items():
++    for k, v in list(d.items()):
+         if isinstance(v, dict):
+             d[k] = process_match_dict(v)
+         elif hasattr(v, 'keyword_object'):
+@@ -115,11 +115,11 @@
+             ra.label('male', my_search("MAN|MALE|BOY"))
+         )
+         keyword_attributes = []
+-        for cat, kws in keyword_categories.items():
++        for cat, kws in list(keyword_categories.items()):
+             category_results = []
+             strings_to_match = []
+             for kw in kws:
+-                if isinstance(kw, basestring):
++                if isinstance(kw, str):
+                     strings_to_match.append(kw)
+                 elif isinstance(kw, dict):
+                     match = doc.byte_offsets_to_pattern_match(kw['offsets'][0])
+@@ -162,7 +162,7 @@
+             maybe_approx_quantities
+         ], prefer='match_length')
+         person = my_search('PERSON|CHILD|ADULT|ELDER|PATIENT|LIFE')
+-        report_type = map(utils.restrict_match, (
++        report_type = list(map(utils.restrict_match, (
+             ra.label('death',
+                 my_search('DIED|DEATH|FATALITIES|KILLED')
+             ) +
+@@ -174,7 +174,7 @@
+                     'CASE|INFECTION|INFECT|STRICKEN'
+                 ) + person
+             )
+-        ))
++        )))
+         report_type = ra.combine([
+             report_type,
+             #Remove matches like "group of X"
+--- annotator-py2/pos_annotator.py	(original)
++++ annotator-py2/pos_annotator.py	(refactored)
+@@ -3,8 +3,8 @@
+ 
+ import nltk
+ 
+-from annotator import *
+-from token_annotator import TokenAnnotator
++from .annotator import *
++from .token_annotator import TokenAnnotator
+ 
+ class POSAnnotator(Annotator):
+ 
+--- annotator-py2/result_aggregators.py	(original)
++++ annotator-py2/result_aggregators.py	(refactored)
+@@ -6,7 +6,8 @@
+ """
+ import pattern, pattern.search
+ import itertools
+-import maximum_weight_interval_set as mwis
++from . import maximum_weight_interval_set as mwis
++from functools import reduce
+ class MetaMatch(pattern.search.Match):
+     """
+     A match composed of pattern Matches
+--- annotator-py2/sentence_annotator.py	(original)
++++ annotator-py2/sentence_annotator.py	(refactored)
+@@ -3,8 +3,8 @@
+ 
+ from nltk import sent_tokenize
+ 
+-from annotator import *
+-from token_annotator import TokenAnnotator
++from .annotator import *
++from .token_annotator import TokenAnnotator
+ 
+ class SentenceAnnotator(Annotator):
+ 
+--- annotator-py2/time_expressions.py	(original)
++++ annotator-py2/time_expressions.py	(refactored)
+@@ -21,7 +21,7 @@
+ 
+     def to_dict(self):
+         return dict( (key, val)
+-                     for key, val in self.__dict__.iteritems()
++                     for key, val in self.__dict__.items()
+                      if val is not None)
+ 
+ 
+@@ -40,7 +40,7 @@
+ 
+     def to_dict(self):
+         return dict( (key, val)
+-                     for key, val in self.__dict__.iteritems()
++                     for key, val in self.__dict__.items()
+                      if val is not None)
+ 
+     @staticmethod
+@@ -62,7 +62,7 @@
+ 
+     def to_dict(self):
+         return dict( (key, val)
+-                     for key, val in self.__dict__.iteritems()
++                     for key, val in self.__dict__.items()
+                      if val is not None)
+ 
+     @staticmethod
+@@ -81,7 +81,7 @@
+ 
+     def to_dict(self):
+         return dict( (key, val)
+-                     for key, val in self.__dict__.iteritems()
++                     for key, val in self.__dict__.items()
+                      if val is not None)
+ 
+ 
+--- annotator-py2/token_annotator.py	(original)
++++ annotator-py2/token_annotator.py	(refactored)
+@@ -3,7 +3,7 @@
+ 
+ import nltk
+ 
+-from annotator import *
++from .annotator import *
+ 
+ class TokenAnnotator(Annotator):
+ 
+--- annotator-py2/utils.py	(original)
++++ annotator-py2/utils.py	(refactored)
+@@ -75,7 +75,7 @@
+     Instead of returning zero when the number can't be parsed it returns None
+     and it can handle numbers delimited with spaces.
+     """
+-    if isinstance(tokens_or_str, basestring):
++    if isinstance(tokens_or_str, str):
+         tokens = []
+         for word in tokens_or_str.split(' '):
+             if len(word) > 0:
+@@ -167,19 +167,16 @@
+                 start_at = start_offset + 1
+ 
+     return offsets
+-import result_aggregators as ra
++from . import result_aggregators as ra
+ def restrict_match(match):
+     """
+     Return a restricted version of a pattern Match object that only includes
+     the words in a chunk that don't violate their own constraint.
+     """
+     if isinstance(match, ra.MetaMatch):
+-        return ra.MetaMatch(map(restrict_match, match.matches), match.labels)
++        return ra.MetaMatch(list(map(restrict_match, match.matches)), match.labels)
+     return pattern.search.Match(
+         match.pattern,
+-        words=filter(
+-            lambda x : match.constraint(x).match(x),
+-            match.words
+-        ),
++        words=[x for x in match.words if match.constraint(x).match(x)],
+         map=match._map1
+     )

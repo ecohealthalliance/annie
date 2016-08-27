@@ -3,7 +3,7 @@
 
 import nltk
 
-from annotator import *
+from .annotator import *
 
 class TokenAnnotator(Annotator):
 

@@ -6,7 +6,8 @@ pattern.search subqueries.
 """
 import pattern, pattern.search
 import itertools
-import maximum_weight_interval_set as mwis
+from . import maximum_weight_interval_set as mwis
+from functools import reduce
 class MetaMatch(pattern.search.Match):
     """
     A match composed of pattern Matches

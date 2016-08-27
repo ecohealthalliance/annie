@@ -75,7 +75,7 @@ def parse_spelled_number(tokens_or_str):
     Instead of returning zero when the number can't be parsed it returns None
     and it can handle numbers delimited with spaces.
     """
-    if isinstance(tokens_or_str, basestring):
+    if isinstance(tokens_or_str, str):
         tokens = []
         for word in tokens_or_str.split(' '):
             if len(word) > 0:
@@ -167,19 +167,16 @@ def find_all_match_offsets(text, match):
                 start_at = start_offset + 1
 
     return offsets
-import result_aggregators as ra
+from . import result_aggregators as ra
 def restrict_match(match):
     """
     Return a restricted version of a pattern Match object that only includes
     the words in a chunk that don't violate their own constraint.
     """
     if isinstance(match, ra.MetaMatch):
-        return ra.MetaMatch(map(restrict_match, match.matches), match.labels)
+        return ra.MetaMatch(list(map(restrict_match, match.matches)), match.labels)
     return pattern.search.Match(
         match.pattern,
-        words=filter(
-            lambda x : match.constraint(x).match(x),
-            match.words
-        ),
+        words=[x for x in match.words if match.constraint(x).match(x)],
         map=match._map1
     )

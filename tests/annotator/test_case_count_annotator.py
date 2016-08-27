@@ -6,7 +6,7 @@ instances of infections, hospitalizations and deaths.
 
 import sys
 import unittest
-import test_utils
+from . import test_utils
 
 sys.path = ['./'] + sys.path
 
@@ -40,7 +40,7 @@ class CaseCountAnnotatorTest(unittest.TestCase):
     def test_strings_and_unicode(self):
 
         examples = [("The number of cases exceeds 30", 30),
-                    (u"The number of cases exceeds 30", 30)]
+                    ("The number of cases exceeds 30", 30)]
 
         for example, actual_count in examples:
             doc = AnnoDoc(example)

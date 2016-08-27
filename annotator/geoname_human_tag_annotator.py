@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Token Annotator"""
 
-from annotator import *
+from .annotator import *
 
 import re
 

@@ -3,8 +3,8 @@
 
 import nltk
 
-from annotator import *
-from token_annotator import TokenAnnotator
+from .annotator import *
+from .token_annotator import TokenAnnotator
 
 class POSAnnotator(Annotator):
 

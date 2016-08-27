@@ -3,7 +3,7 @@ def nested_items(d):
     Iterates over all the items in nested dictionaries returning path arrays
     with values.
     """
-    for k,v in d.items():
+    for k,v in list(d.items()):
         if isinstance(v, dict):
             for kpath, v2 in nested_items(v):
                 yield [k] + kpath, v2
@@ -13,7 +13,7 @@ def get_path(d, path, default=None):
     if not isinstance(d, dict):
         #print "Could not get %s in non-dict %s" % (path, d)
         return None
-    if isinstance(path, basestring):
+    if isinstance(path, str):
         path = path.split('.')
     if len(path) == 1:
         return d.get(path[0], default)

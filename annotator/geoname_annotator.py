@@ -6,11 +6,11 @@ import itertools
 from pymongo import MongoClient
 import os
 
-from annotator import *
-from ngram_annotator import NgramAnnotator
-from ne_annotator import NEAnnotator
+from .annotator import *
+from .ngram_annotator import NgramAnnotator
+from .ne_annotator import NEAnnotator
 from geopy.distance import great_circle
-from maximum_weight_interval_set import Interval, find_maximum_weight_interval_set
+from .maximum_weight_interval_set import Interval, find_maximum_weight_interval_set
 
 import datetime
 import logging
@@ -180,7 +180,7 @@ class GeonameAnnotator(Annotator):
                 span_to_locations[span] =\
                     span_to_locations.get(span, []) + [location]
         for span_a, span_b in itertools.permutations(
-            span_to_locations.keys(), 2
+            list(span_to_locations.keys()), 2
         ):
             if not span_a.comes_before(span_b, max_dist=4): continue
             if (
@@ -433,12 +433,12 @@ class GeonameAnnotator(Annotator):
                 return 40 + max_containment_level * 10
 
         def feature_code_score():
-            for code, score in {
+            for code, score in list({
                 # Continent (need this bc Africa has 0 population)
                 'CONT' : 100,
                 'ADM' : 80,
                 'PPL' : 65,
-            }.items():
+            }.items()):
                 if candidate['feature code'].startswith(code):
                     return score
             return 0
@@ -472,20 +472,20 @@ class GeonameAnnotator(Annotator):
         }
         total_score = sum([
             score_fun() * float(weight)
-            for score_fun, weight in feature_weights.items()
-        ]) / math.sqrt(sum([x**2 for x in feature_weights.values()]))
+            for score_fun, weight in list(feature_weights.items())
+        ]) / math.sqrt(sum([x**2 for x in list(feature_weights.values())]))
 
         # This is just for debugging, put FP and FN ids here to see
         # their score.
         if candidate['geonameid'] in ['372299', '8060879', '408664', '377268']:
-            print (
+            print((
                 candidate['name'],
                 list(candidate['spans'])[0].text,
                 total_score
-            )
-            print {
+            ))
+            print({
                 score_fun.__name__ : score_fun()
-                for score_fun, weight in feature_weights.items()
-            }
+                for score_fun, weight in list(feature_weights.items())
+            })
 
         return total_score

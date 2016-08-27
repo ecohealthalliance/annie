@@ -6,8 +6,8 @@ import dateutil.parser
 
 import requests
 
-from annotator import *
-from time_expressions import *
+from .annotator import *
+from .time_expressions import *
 
 class StanfordSpan(AnnoSpan):
 

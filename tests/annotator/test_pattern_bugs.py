@@ -2,7 +2,7 @@
 # coding=utf8
 import sys
 import unittest
-import test_utils
+from . import test_utils
 sys.path = ['./'] + sys.path
 
 from annotator.annotator import AnnoDoc
@@ -24,11 +24,11 @@ class PatternBugTests(unittest.TestCase):
         doc.add_tier(self.annotator)
 
     def test_match_long_ellipsis2(self):
-        doc = AnnoDoc(u"""They will also be used to give the all-clear for Ebola patients who survive the disease...""")
+        doc = AnnoDoc("""They will also be used to give the all-clear for Ebola patients who survive the disease...""")
         doc.add_tier(self.annotator)
 
     def test_end(self):
-        doc = AnnoDoc(u"n ��i.\n \n")
+        doc = AnnoDoc("n ��i.\n \n")
         doc.add_tier(CaseCountAnnotator())
 
 if __name__ == '__main__':

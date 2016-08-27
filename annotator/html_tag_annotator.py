@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """HTML tag annotator"""
 
-from HTMLParser import HTMLParser
+from html.parser import HTMLParser
 
-from annotator import *
+from .annotator import *
 
 import re
 

@@ -7,8 +7,8 @@ from collections import defaultdict
 from pymongo import MongoClient
 import os
 
-from annotator import *
-from ngram_annotator import NgramAnnotator
+from .annotator import *
+from .ngram_annotator import NgramAnnotator
 
 class KeywordAnnotator(Annotator):
 
@@ -43,9 +43,9 @@ class KeywordAnnotator(Annotator):
         for ngram_span in doc.tiers['ngrams'].spans:
             ngram_spans_by_lowercase[ngram_span.text.lower()].append(ngram_span)
 
-        ngrams = ngram_spans_by_lowercase.keys()
+        ngrams = list(ngram_spans_by_lowercase.keys())
 
-        for keyword_type, keywords in self.keywords.iteritems():
+        for keyword_type, keywords in self.keywords.items():
 
             keyword_spans = []
             for keyword in set(keywords.keys()).intersection(ngrams):

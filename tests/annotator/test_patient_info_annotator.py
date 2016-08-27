@@ -2,7 +2,7 @@
 # coding=utf8
 import sys
 import unittest
-import test_utils
+from . import test_utils
 sys.path = ['./'] + sys.path
 
 from annotator.annotator import AnnoDoc

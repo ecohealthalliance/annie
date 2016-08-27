@@ -5,13 +5,13 @@ Annotates patient descriptions.
 import re
 from collections import defaultdict
 
-from annotator import *
-import result_aggregators as ra
-import utils
+from .annotator import *
+from . import result_aggregators as ra
+from . import utils
 
 def process_match_dict(d):
     numeric_keys = ['number', 'min', 'max', 'range_start', 'range_end']
-    for k, v in d.items():
+    for k, v in list(d.items()):
         if isinstance(v, dict):
             d[k] = process_match_dict(v)
         elif hasattr(v, 'keyword_object'):
@@ -115,11 +115,11 @@ class PatientInfoAnnotator(Annotator):
             ra.label('male', my_search("MAN|MALE|BOY"))
         )
         keyword_attributes = []
-        for cat, kws in keyword_categories.items():
+        for cat, kws in list(keyword_categories.items()):
             category_results = []
             strings_to_match = []
             for kw in kws:
-                if isinstance(kw, basestring):
+                if isinstance(kw, str):
                     strings_to_match.append(kw)
                 elif isinstance(kw, dict):
                     match = doc.byte_offsets_to_pattern_match(kw['offsets'][0])
@@ -162,7 +162,7 @@ class PatientInfoAnnotator(Annotator):
             maybe_approx_quantities
         ], prefer='match_length')
         person = my_search('PERSON|CHILD|ADULT|ELDER|PATIENT|LIFE')
-        report_type = map(utils.restrict_match, (
+        report_type = list(map(utils.restrict_match, (
             ra.label('death',
                 my_search('DIED|DEATH|FATALITIES|KILLED')
             ) +
@@ -174,7 +174,7 @@ class PatientInfoAnnotator(Annotator):
                     'CASE|INFECTION|INFECT|STRICKEN'
                 ) + person
             )
-        ))
+        )))
         report_type = ra.combine([
             report_type,
             #Remove matches like "group of X"

@@ -9,9 +9,9 @@ from collections import defaultdict
 from nltk import sent_tokenize
 
 import pattern
-import utils
+from . import utils
 
-import maximum_weight_interval_set as mwis
+from . import maximum_weight_interval_set as mwis
 
 def tokenize(text):
     return sent_tokenize(text)
@@ -28,15 +28,15 @@ class AnnoDoc(object):
     # stripped of tags? This will ruin offsets.
 
     def __init__(self, text=None, date=None):
-        if type(text) is unicode:
+        if type(text) is str:
             self.text = text
         elif type(text) is str:
-            self.text = unicode(text, 'utf8')
+            self.text = str(text, 'utf8')
         else:
             raise TypeError("text must be string or unicode")
         # Replacing the unicode dashes is done to avoid this pattern bug:
         # https://github.com/clips/pattern/issues/104
-        self.text = self.text.replace(u"—", "-")
+        self.text = self.text.replace("—", "-")
         self.tiers = {}
         self.properties = {}
         self.pattern_tree = None
@@ -164,10 +164,10 @@ class AnnoDoc(object):
                 text_offset += 1
             else:
                 raise Exception(
-                    u"Cannot match word [" + word.string +
-                    u"] with text [" + self.text[text_offset:text_offset + 10] +
-                    u"]" +
-                    u" match_len=" + unicode(match_len)
+                    "Cannot match word [" + word.string +
+                    "] with text [" + self.text[text_offset:text_offset + 10] +
+                    "]" +
+                    " match_len=" + str(match_len)
                 )
         # Fill the empty offsets with their previous value
         prev_val = None
@@ -205,7 +205,7 @@ class AnnoDoc(object):
             json_obj['properties'] = self.properties
 
         json_obj['tiers'] = {}
-        for name, tier in self.tiers.iteritems():
+        for name, tier in self.tiers.items():
             json_obj['tiers'][name] = tier.to_json()
 
         return json.dumps(json_obj)
@@ -213,7 +213,7 @@ class AnnoDoc(object):
     def filter_overlapping_spans(self, tier_names=None):
         """Remove the smaller of any overlapping spans."""
         if not tier_names:
-            tiers = self.tiers.keys()
+            tiers = list(self.tiers.keys())
         for tier_name in tier_names:
             if tier_name not in self.tiers: continue
             tier = self.tiers[tier_name]
@@ -240,7 +240,7 @@ class AnnoTier(object):
             self.spans = spans
 
     def __repr__(self):
-        return unicode([unicode(span) for span in self.spans])
+        return str([str(span) for span in self.spans])
 
     def __len__(self):
         return len(self.spans)
@@ -266,19 +266,16 @@ class AnnoTier(object):
     def spans_over(self, start, end=None):
         """Get all spans which overlap a position or range"""
         if not end: end = start + 1
-        return filter(lambda span: len(set(range(span.start, span.end)).
-                                       intersection(range(start, end))) > 0,
-                      self.spans)
+        return [span for span in self.spans if len(set(range(span.start, span.end)).
+                                       intersection(list(range(start, end)))) > 0]
 
     def spans_in(self, start, end):
         """Get all spans which are contained in a range"""
-        return filter(lambda span: span.start >= start and span.end <= end,
-                      self.spans)
+        return [span for span in self.spans if span.start >= start and span.end <= end]
 
     def spans_at(self, start, end):
         """Get all spans with certain start and end positions"""
-        return filter(lambda span: start == span.start and end == span.end,
-                      self.spans)
+        return [span for span in self.spans if start == span.start and end == span.end]
 
     def spans_over_span(self, span):
         """Get all spans which overlap another span"""
@@ -294,7 +291,7 @@ class AnnoTier(object):
 
     def spans_with_label(self, label):
         """Get all spans which have a given label"""
-        return filter(lambda span: span.label == label, self.spans)
+        return [span for span in self.spans if span.label == label]
 
     def labels(self):
         """Get a list of all labels in this tier"""
@@ -324,7 +321,7 @@ class AnnoTier(object):
 class AnnoSpan(object):
 
     def __repr__(self):
-        return u'{0}-{1}:{2}'.format(self.start, self.end, self.label)
+        return '{0}-{1}:{2}'.format(self.start, self.end, self.label)
 
     def __init__(self, start, end, doc, label=None):
         self.start = start

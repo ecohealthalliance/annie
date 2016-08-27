@@ -21,7 +21,7 @@ class TimePoint:
 
     def to_dict(self):
         return dict( (key, val)
-                     for key, val in self.__dict__.iteritems()
+                     for key, val in self.__dict__.items()
                      if val is not None)
 
 
@@ -40,7 +40,7 @@ class TimeRange:
 
     def to_dict(self):
         return dict( (key, val)
-                     for key, val in self.__dict__.iteritems()
+                     for key, val in self.__dict__.items()
                      if val is not None)
 
     @staticmethod
@@ -62,7 +62,7 @@ class TimeDuration:
 
     def to_dict(self):
         return dict( (key, val)
-                     for key, val in self.__dict__.iteritems()
+                     for key, val in self.__dict__.items()
                      if val is not None)
 
     @staticmethod
@@ -81,7 +81,7 @@ class TimeSet:
 
     def to_dict(self):
         return dict( (key, val)
-                     for key, val in self.__dict__.iteritems()
+                     for key, val in self.__dict__.items()
                      if val is not None)
 
 

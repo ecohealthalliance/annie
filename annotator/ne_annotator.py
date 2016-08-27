@@ -3,8 +3,8 @@
 
 import nltk
 
-from annotator import *
-from pos_annotator import POSAnnotator
+from .annotator import *
+from .pos_annotator import POSAnnotator
 
 class NEAnnotator(Annotator):
 
@@ -19,7 +19,7 @@ class NEAnnotator(Annotator):
             pos_annotator = POSAnnotator()
             doc.add_tier(pos_annotator)
 
-        ne_tags = self.tag(zip(doc.tiers['tokens'].labels(), doc.tiers['pos'].labels()))
+        ne_tags = self.tag(list(zip(doc.tiers['tokens'].labels(), doc.tiers['pos'].labels())))
 
         ne_spans = []
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """Ngram Annotator"""
 
-from annotator import *
-from token_annotator import TokenAnnotator
+from .annotator import *
+from .token_annotator import TokenAnnotator
 
 class NgramAnnotator(Annotator):
 

@@ -2,7 +2,7 @@
 # coding=utf8
 import sys
 import unittest
-import test_utils
+from . import test_utils
 
 sys.path = ['./'] + sys.path
 
@@ -20,7 +20,7 @@ class OldCaseCountAnnotatorTest(unittest.TestCase):
         to take an extremely long time to parse as is.
         https://github.com/clips/pattern/issues/104
         """
-        doc = AnnoDoc(u"2012 — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — the coordination of Epidemiological surveillance,")
+        doc = AnnoDoc("2012 — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — the coordination of Epidemiological surveillance,")
         doc.add_tier(self.annotator)
     
     def test_buggy_article(self):

@@ -7,9 +7,9 @@ from collections import defaultdict
 
 import pattern.search, pattern.en
 
-from annotator import *
+from .annotator import *
 
-import utils
+from . import utils
 
 cumulative_pattern = re.compile('|'.join(["total", "sum", "brings to", "in all", "already"]), re.I)
 def find_cumulative_keywords(text, start_offset, stop_offset):
