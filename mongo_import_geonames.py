@@ -44,7 +44,7 @@ def read_geonames_csv(file_path):
         'modification date',
     ]
     #Loading geonames data may cause errors without this line:
-    csv.field_size_limit(sys.maxint)
+    csv.field_size_limit(sys.maxsize)
     with open(file_path, 'rb') as f:
         reader = unicodecsv.DictReader(f,
             fieldnames=geonames_fields,
@@ -72,7 +72,7 @@ if __name__ == '__main__':
         "--db_name", default='geonames'
     )
     args = parser.parse_args()
-    print "This takes me about a half hour to run on my machine..."
+    print("This takes me about a half hour to run on my machine...")
     client = MongoClient(args.mongo_url)
     db = client[args.db_name]
     collection = db['allCountries']
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     for i, geoname in enumerate(read_geonames_csv('allCountries.txt')):
         total_row_estimate = 10000000
         if i % (total_row_estimate / 10) == 0:
-            print i, '/', total_row_estimate, '+ geonames imported'
+            print(i, '/', total_row_estimate, '+ geonames imported')
         collection.insert(geoname)
     db.allCountries.ensure_index('name')
     db.allCountries.ensure_index('alternatenames')
@@ -106,7 +106,7 @@ if __name__ == '__main__':
             found_names.add(alt)
     difference = set(test_names) - found_names
     if difference != set():
-        print "Test failed!"
-        print "Missing names:", difference
+        print("Test failed!")
+        print("Missing names:", difference)
     if time.time() - start_time > 15:
-        print "Warning: query took over 15 seconds."
+        print("Warning: query took over 15 seconds.")

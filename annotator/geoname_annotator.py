@@ -291,7 +291,8 @@ class GeonameAnnotator(Annotator):
         # Remove unneeded properties:
         # Be careful if adding these back in, they might not be serializable
         # data types.
-        props_to_omit = ['spans', 'alternateLocations', 'alternatenames']
+        # props_to_omit = ['spans', 'alternateLocations', 'alternatenames']
+        props_to_omit = ['spans', 'alternatenames']
         for geospan in geo_spans:
             # The while loop removes the properties from the parentLocations.
             # There will probably only be one parent location.
@@ -336,7 +337,7 @@ class GeonameAnnotator(Annotator):
         def synonymity():
             # Geonames with lots of alternate names
             # tend to be the ones most commonly referred to.
-            # For examle, coutries have lots of alternate names.
+            # For example, coutries have lots of alternate names.
             if len(candidate['alternatenames']) > 8:
                 return 100
             elif len(candidate['alternatenames']) > 4:
