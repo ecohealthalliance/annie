@@ -94,19 +94,13 @@ class AnnoTier(object):
 
     def to_json(self):
 
-        # This is to allow us to serialize set() objects.
-        def set_default(obj):
-            if isinstance(obj, set):
-                return list(obj)
-            raise TypeError
-
         docless_spans = []
         for span in self.spans:
             span_dict = span.__dict__.copy()
             del span_dict['doc']
             docless_spans.append(span_dict)
 
-        return json.dumps(docless_spans, default=set_default)
+        return json.dumps(docless_spans)
 
     def next_span(self, span):
         """Get the next span after this one"""

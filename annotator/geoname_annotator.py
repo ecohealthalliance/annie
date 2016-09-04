@@ -291,8 +291,7 @@ class GeonameAnnotator(Annotator):
         # Remove unneeded properties:
         # Be careful if adding these back in, they might not be serializable
         # data types.
-        # props_to_omit = ['spans', 'alternateLocations', 'alternatenames']
-        props_to_omit = ['spans', 'alternatenames']
+        props_to_omit = ['spans', 'alternateLocations', 'alternatenames']
         for geospan in geo_spans:
             # The while loop removes the properties from the parentLocations.
             # There will probably only be one parent location.
