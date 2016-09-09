@@ -91,8 +91,176 @@ class GeoSpan(AnnoSpan):
         result.update(self.geoname)
         return result
 
-class GeonameAnnotator(Annotator):
+class Location(dict):
+    """
+    This main purpose of this class is to create hashable dictionaries
+    that we can use in sets.
+    """
+    def __hash__(self):
+        return id(self)
 
+def feature(fun):
+    """
+    A decorator for designatic which methods are used to create features.
+    """
+    fun.is_feature = True
+    return fun
+
+class GeonameFeatures(object):
+    def __init__(self, geoname):
+        self.geoname = geoname
+        self.feature_dict = {
+            feature_name: feature_fun(self)
+            for feature_name, feature_fun in GeonameFeatures.__dict__.items()
+            if hasattr(feature_fun, "is_feature") }
+    @feature
+    def population_score(self):
+        geoname = self.geoname
+        if geoname['population'] > 1000000:
+            return 100
+        elif geoname['population'] > 500000:
+            return 60
+        elif geoname['population'] > 300000:
+            return 40
+        elif geoname['population'] > 200000:
+            return 30
+        elif geoname['population'] > 100000:
+            return 20
+        elif geoname['population'] > 10000:
+            return 5
+        else:
+            return 0
+    @feature
+    def synonymity(self):
+        geoname = self.geoname
+        # Geonames with lots of alternate names
+        # tend to be the ones most commonly referred to.
+        # For example, coutries have lots of alternate names.
+        if len(geoname['alternatenames']) > 8:
+            return 100
+        elif len(geoname['alternatenames']) > 4:
+            return 50
+        elif len(geoname['alternatenames']) > 0:
+            return 10
+        else:
+            return 0
+    @feature
+    def num_spans_score(self):
+        geoname = self.geoname
+        return min(len(geoname['spans']), 4) * 25
+    @feature
+    def short_span_score(self):
+        geoname = self.geoname
+        max_span_length = max([
+            len(span.text) for span in geoname['spans']
+        ])
+        if max_span_length < 4:
+            return 100
+        elif max_span_length < 5:
+            return 10
+        else:
+            return 0
+    @feature
+    def cannonical_name_used(self):
+        geoname = self.geoname
+        return 100 if any([
+            span.text == geoname['name'] for span in geoname['spans']
+        ]) else 0
+    @feature
+    def NEs_contained(self):
+        geoname = self.geoname
+        NE_overlap = 0
+        total_len = 0
+        for span in geoname['spans']:
+            ne_spans = span.doc.tiers['nes'].spans_in_span(span)
+            total_len += len(span.text)
+            for ne_span in ne_spans:
+                if ne_span.label == 'GPE':
+                    NE_overlap += len(ne_span.text)
+        return float(100 * NE_overlap) / total_len
+    @feature
+    def distinctness(self):
+        geoname = self.geoname
+        return 100 / float(len(geoname['alternateLocations']) + 1)
+    @feature
+    def max_span_score(self):
+        geoname = self.geoname
+        max_span = max([
+            len(span.text) for span in geoname['spans']
+        ])
+        if max_span < 5: return 0
+        elif max_span < 8: return 40
+        elif max_span < 10: return 60
+        elif max_span < 15: return 80
+        else: return 100
+    # def close_locations(self):
+    #     geoname = self.geoname
+    #     if len(resolved_locations) == 0: return 0
+    #     count = 0
+    #     for location in resolved_locations:
+    #         distance = great_circle(
+    #             (geoname['latitude'], geoname['longitude']),
+    #             (location['latitude'], location['longitude'])
+    #         ).kilometers
+    #         if distance < 500:
+    #             count += 1
+    #     return 100 * float(count) / len(resolved_locations)
+    # def closest_location(self):
+    #     geoname = self.geoname
+    #     if len(resolved_locations) == 0: return 0
+    #     closest = min([
+    #         great_circle(
+    #             (geoname['latitude'], geoname['longitude']),
+    #             (location['latitude'], location['longitude'])
+    #         ).kilometers
+    #         for location in resolved_locations
+    #     ])
+    #     if closest < 10:
+    #         return 100
+    #     elif closest < 100:
+    #         return 60
+    #     elif closest < 1000:
+    #         return 40
+    #     else:
+    #         return 0
+    # def containment_level(self):
+    #     geoname = self.geoname
+    #     max_containment_level = max([
+    #         max(
+    #             location_contains(location, geoname),
+    #             location_contains(geoname, location)
+    #         )
+    #         for location in resolved_locations
+    #     ] + [0])
+    #     if max_containment_level == 0:
+    #         return 0
+    #     else:
+    #         return 40 + max_containment_level * 10
+    @feature
+    def feature_code_score(self):
+        geoname = self.geoname
+        for code, score in list({
+            # Continent (need this bc Africa has 0 population)
+            'CONT' : 100,
+            'ADM' : 80,
+            'PPL' : 65,
+        }.items()):
+            if geoname['feature code'].startswith(code):
+                return score
+        return 0
+    def to_dict(self):
+        return self.feature_dict
+    def score(self, feature_weights):
+        """
+        Return a score between 0 and 100
+        """
+        total_score = sum([
+            self.feature_dict[feature_name] * float(weight)
+            for feature_name, weight in list(feature_weights.items())
+        ]) / math.sqrt(sum([x**2 for x in list(feature_weights.values())]))
+        return total_score
+
+class GeonameAnnotator(Annotator):
     def __init__(self, geonames_collection=None):
         if not geonames_collection:
             if 'MONGO_URL' in os.environ:
@@ -106,14 +274,18 @@ class GeonameAnnotator(Annotator):
         assert geonames_collection.count() > 0
         self.geonames_collection = geonames_collection
 
-    # TODO text in this case means AnnoText, elswhere, it's raw text
-    def annotate(self, doc):
-        logger.info('geoannotator started')
-
+    def get_candidate_geonames(self, doc):
+        """
+        Returns an array of geoname dicts correponding to locations that the document may refer to.
+        The dicts are extended with lists of associated AnnoSpans.
+        """
         if 'ngrams' not in doc.tiers:
             ngram_annotator = NgramAnnotator()
             doc.add_tier(ngram_annotator)
-
+        if 'nes' not in doc.tiers:
+            ne_annotator = NEAnnotator()
+            doc.add_tier(ne_annotator)
+        logger.info('Named entities annotated')
         all_ngrams = set([span.text
             for span in doc.tiers['ngrams'].spans
             if span.text not in blocklist and
@@ -121,11 +293,6 @@ class GeonameAnnotator(Annotator):
             span.text[0] == span.text[0].upper()
         ])
         logger.info('%s ngrams extracted' % len(all_ngrams))
-        if 'nes' not in doc.tiers:
-            ne_annotator = NEAnnotator()
-            doc.add_tier(ne_annotator)
-        logger.info('Named entities annotated')
-
         geoname_cursor = self.geonames_collection.find({
             '$or' : [
                 { 'name' : { '$in' : list(all_ngrams) } },
@@ -138,10 +305,9 @@ class GeonameAnnotator(Annotator):
         })
         geoname_results = list(geoname_cursor)
         logger.info('%s geonames fetched' % len(geoname_results))
-        # ObjectId() cannot be JSON serialized and we have no use for them
+        # ObjectId() cannot be JSON serialized so keeping is a nuisance
         for geoname_result in geoname_results:
             del geoname_result['_id']
-
         # Associate spans with the geonames.
         # This is done up front so span information can be used in the scoring
         # function
@@ -151,14 +317,6 @@ class GeonameAnnotator(Annotator):
         }
         for span in doc.tiers['ngrams'].spans:
             span_text_to_spans[span.text].append(span)
-        class Location(dict):
-            """
-            This main purpose of this class is to create hashable dictionaries
-            that we can use in sets.
-            """
-            def __hash__(self):
-                return id(self)
-
         candidate_locations = []
         for location_dict in geoname_results:
             location = Location(location_dict)
@@ -171,7 +329,6 @@ class GeonameAnnotator(Annotator):
                 if name not in span_text_to_spans: continue
                 for span in span_text_to_spans[name]:
                     location['spans'].add(span)
-
         # Add combined spans to locations that are adjacent to a span linked to
         # an administrative division. e.g. Seattle, WA
         span_to_locations = {}
@@ -188,7 +345,6 @@ class GeonameAnnotator(Annotator):
                     set(span_a.doc.text[span_a.end:span_b.start]) - set(", ")
                 ) > 1
             ): continue
-
             combined_span = span_a.extended_through(span_b)
             possible_locations = []
             for loc_a, loc_b in itertools.product(
@@ -203,7 +359,6 @@ class GeonameAnnotator(Annotator):
                     if location_contains(loc_b, loc_a) > 0:
                         loc_a['spans'].add(combined_span)
                         loc_a['parentLocation'] = loc_b
-        logger.info('%s candidate locations prepared' % len(candidate_locations))
         # Find locations with overlapping spans
         for idx, location_a in enumerate(candidate_locations):
             a_spans = location_a['spans']
@@ -216,65 +371,11 @@ class GeonameAnnotator(Annotator):
                     # to be an alternate location that competes with it.
                     location_a['alternateLocations'].add(location_b)
                     location_b['alternateLocations'].add(location_a)
-        # Iterative resolution
-        # Add location with scores above the threshold to the resolved location.
-        # Keep rescoring the remaining locations until no more can be resolved.
-        remaining_locations = list(candidate_locations)
-        resolved_locations = []
-        THRESH = 60
-        iteration = 0
-        while True:
-            logger.info('itartion: %s' % iteration)
-            iteration += 1
-            for candidate in remaining_locations:
-                candidate['score'] = self.score_candidate(
-                    candidate, resolved_locations
-                )
-            logger.info('locations scored')
-            # If there are alternate locations with higher scores
-            # give this candidate a zero.
-            for candidate in remaining_locations:
-                for alt in candidate['alternateLocations']:
-                    # We end up with multiple locations for per span if they
-                    # are resolved in different iterations or
-                    # if the scores are exactly the same.
-                    # TODO: This needs to be delt with in the next stage.
-                    if candidate['score'] < alt['score']:
-                        candidate['score'] = 0
-                        break
-            newly_resolved_candidates = [
-                candidate
-                for candidate in remaining_locations
-                if candidate['score'] > THRESH
-            ]
-            # If there are a lot of locations
-            # comparing against the resolved locations is slow.
-            # This removes locations that have a low score.
-            if len(remaining_locations) > 1000:
-                for loc in list(remaining_locations):
-                    if loc['score'] < 15:
-                        remaining_locations.remove(loc)
-            resolved_locations.extend(newly_resolved_candidates)
-            for candiate in newly_resolved_candidates:
-                if candidate in remaining_locations:
-                    remaining_locations.remove(candiate)
-            if len(newly_resolved_candidates) == 0:
-                break
-        logger.info(
-            'resolved %s locations in %s iterations' %
-            (len(resolved_locations), iteration)
-        )
-        geo_spans = []
-        for location in resolved_locations:
-            # Copy the dict so we don't need to return a custom class.
-            location = dict(location)
-            for span in location['spans']:
-                # Maybe we should try to rule out some of the spans that
-                # might not actually be associated with the location.
-                geo_span = GeoSpan(
-                    span.start, span.end, doc, location
-                )
-                geo_spans.append(geo_span)
+        logger.info('%s candidate locations prepared' % len(candidate_locations))
+        return candidate_locations
+    def extract_features(self, locations):
+        return [GeonameFeatures(location) for location in locations]
+    def cull_geospans(self, geo_spans):
         mwis = find_maximum_weight_interval_set([
             Interval(
                 geo_span.start,
@@ -288,11 +389,49 @@ class GeonameAnnotator(Annotator):
         ])
         retained_spans = [interval.corresponding_object for interval in mwis]
         logger.info('overlapping geospans removed')
+        return retained_spans
+    def annotate(self, doc):
+        logger.info('geoannotator started')
+        candidate_locations = self.get_candidate_geonames(doc)
+        features = self.extract_features(candidate_locations)
+        feature_weights = dict(
+            population_score=2.0,
+            synonymity=1.0,
+            num_spans_score=0.4,
+            short_span_score=(-5),
+            NEs_contained=1.2,
+            # Distinctness is probably more effective when combined
+            # with other features
+            distinctness=1.0,
+            max_span_score=1.0,
+            # close_locations=0.8,
+            # closest_location=0.8,
+            # containment_level=0.8,
+            cannonical_name_used=0.5,
+            feature_code_score=0.6,
+        )
+        for location, feature in zip(candidate_locations, features):
+            location['score'] = feature.score(feature_weights)
+        culled_locations = [location
+            for location in candidate_locations
+            if location['score'] > 50]
+        geo_spans = []
+        for location in culled_locations:
+            # Copy the dict so we don't need to return a custom class.
+            location = dict(location)
+            for span in location['spans']:
+                # TODO: Adjust scores to give geospans that exactly match
+                # a corresponding geoname a bonus.
+                geo_span = GeoSpan(
+                    span.start, span.end, doc, location
+                )
+                geo_spans.append(geo_span)
+        culled_geospans = self.cull_geospans(geo_spans)
         # Remove unneeded properties:
         # Be careful if adding these back in, they might not be serializable
         # data types.
-        props_to_omit = ['spans', 'alternateLocations', 'alternatenames']
-        for geospan in geo_spans:
+        props_to_omit = ['spans', 'alternatenames']
+        for geospan in culled_geospans:
             # The while loop removes the properties from the parentLocations.
             # There will probably only be one parent location.
             cur_location = geospan.geoname
@@ -308,184 +447,5 @@ class GeonameAnnotator(Annotator):
                     cur_location = cur_location['parentLocation']
                 else:
                     break
-
-        doc.tiers['geonames'] = AnnoTier(retained_spans)
-
+        doc.tiers['geonames'] = AnnoTier(culled_geospans)
         return doc
-
-    def score_candidate(self, candidate, resolved_locations):
-        """
-        Return a score between 0 and 100
-        """
-        def population_score():
-            if candidate['population'] > 1000000:
-                return 100
-            elif candidate['population'] > 500000:
-                return 60
-            elif candidate['population'] > 300000:
-                return 40
-            elif candidate['population'] > 200000:
-                return 30
-            elif candidate['population'] > 100000:
-                return 20
-            elif candidate['population'] > 10000:
-                return 5
-            else:
-                return 0
-
-        def synonymity():
-            # Geonames with lots of alternate names
-            # tend to be the ones most commonly referred to.
-            # For example, coutries have lots of alternate names.
-            if len(candidate['alternatenames']) > 8:
-                return 100
-            elif len(candidate['alternatenames']) > 4:
-                return 50
-            elif len(candidate['alternatenames']) > 0:
-                return 10
-            else:
-                return 0
-
-        def num_spans_score():
-            return min(len(candidate['spans']), 4) * 25
-
-        def short_span_score():
-            max_span_length = max([
-                len(span.text) for span in candidate['spans']
-            ])
-            if max_span_length < 4:
-                return 100
-            elif max_span_length < 5:
-                return 10
-            else:
-                return 0
-
-        def cannonical_name_used():
-            return 100 if any([
-                span.text == candidate['name'] for span in candidate['spans']
-            ]) else 0
-
-        def NEs_contained():
-            NE_overlap = 0
-            total_len = 0
-            for span in candidate['spans']:
-                ne_spans = span.doc.tiers['nes'].spans_in_span(span)
-                total_len += len(span.text)
-                for ne_span in ne_spans:
-                    if ne_span.label == 'GPE':
-                        NE_overlap += len(ne_span.text)
-            return float(100 * NE_overlap) / total_len
-
-        def distinctness():
-            return 100 / float(len(candidate['alternateLocations']) + 1)
-
-        def max_span_score():
-            max_span = max([
-                len(span.text) for span in candidate['spans']
-            ])
-            if max_span < 5: return 0
-            elif max_span < 8: return 40
-            elif max_span < 10: return 60
-            elif max_span < 15: return 80
-            else: return 100
-
-        def close_locations():
-            if len(resolved_locations) == 0: return 0
-            count = 0
-            for location in resolved_locations:
-                distance = great_circle(
-                    (candidate['latitude'], candidate['longitude']),
-                    (location['latitude'], location['longitude'])
-                ).kilometers
-                if distance < 500:
-                    count += 1
-            return 100 * float(count) / len(resolved_locations)
-
-        def closest_location():
-            if len(resolved_locations) == 0: return 0
-            closest = min([
-                great_circle(
-                    (candidate['latitude'], candidate['longitude']),
-                    (location['latitude'], location['longitude'])
-                ).kilometers
-                for location in resolved_locations
-            ])
-            if closest < 10:
-                return 100
-            elif closest < 100:
-                return 60
-            elif closest < 1000:
-                return 40
-            else:
-                return 0
-
-        def containment_level():
-            max_containment_level = max([
-                max(
-                    location_contains(location, candidate),
-                    location_contains(candidate, location)
-                )
-                for location in resolved_locations
-            ] + [0])
-            if max_containment_level == 0:
-                return 0
-            else:
-                return 40 + max_containment_level * 10
-
-        def feature_code_score():
-            for code, score in list({
-                # Continent (need this bc Africa has 0 population)
-                'CONT' : 100,
-                'ADM' : 80,
-                'PPL' : 65,
-            }.items()):
-                if candidate['feature code'].startswith(code):
-                    return score
-            return 0
-
-        # This prevents us from picking up congo town
-        # if candidate['population'] < 1000 and candidate['feature class'] in ['A', 'P']:
-        #     return 0
-
-        if any([
-            alt in resolved_locations
-            for alt in candidate['alternateLocations']
-        ]):
-            return 0
-
-        # Commented out features will not be evaluated.
-        feature_weights = {
-            population_score : 2.0,
-            synonymity : 1.0,
-            num_spans_score : 0.4,
-            short_span_score : (-5),
-            NEs_contained : 1.2,
-            # Distinctness is probably more effective when combined
-            # with other features
-            distinctness : 1.0,
-            max_span_score : 1.0,
-            close_locations : 0.8,
-            closest_location : 0.8,
-            containment_level : 0.8,
-            cannonical_name_used : 0.5,
-            feature_code_score : 0.6,
-        }
-        total_score = sum([
-            score_fun() * float(weight)
-            for score_fun, weight in list(feature_weights.items())
-        ]) / math.sqrt(sum([x**2 for x in list(feature_weights.values())]))
-
-        # This is just for debugging, put FP and FN ids here to see
-        # their score.
-        if candidate['geonameid'] in ['372299', '8060879', '408664', '377268']:
-            print((
-                candidate['name'],
-                list(candidate['spans'])[0].text,
-                total_score
-            ))
-            print({
-                score_fun.__name__ : score_fun()
-                for score_fun, weight in list(feature_weights.items())
-            })
-
-        return total_score
