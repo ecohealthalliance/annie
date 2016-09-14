@@ -14,23 +14,32 @@ class KeywordAnnotator(Annotator):
 
     keyword_types = ['diseases', 'hosts', 'modes', 'pathogens', 'symptoms']
 
-    def __init__(self, db=None):
-        if not db:
-            if 'MONGO_URL' in os.environ:
-                mongo_url = os.environ['MONGO_URL']
-            else:
-                mongo_url = 'mongodb://localhost:27017'
-
-            client = MongoClient(mongo_url)
-            db = client.annotation
-
+    def __init__(self, db=None, keywords=None):
+        """
+        Annotate using keywords in the given keywords array, or if an array
+        is not given, using the mongo collections with names in keyword_types.
+        """
         self.keywords = {}
-
-        for keyword_type in self.keyword_types:
-            self.keywords[keyword_type] = {
-                res['_id'].lower(): (res['_id'], res['case_sensitive'])
-                for res in db[keyword_type].find()
+        if keywords:
+            self.keywords['keywords'] = {
+                keyword.lower(): (keyword, True)
+                for keyword in keywords
             }
+        else:
+            if not db:
+                if 'MONGO_URL' in os.environ:
+                    mongo_url = os.environ['MONGO_URL']
+                else:
+                    mongo_url = 'mongodb://localhost:27017'
+    
+                client = MongoClient(mongo_url)
+                db = client.annotation
+    
+            for keyword_type in self.keyword_types:
+                self.keywords[keyword_type] = {
+                    res['_id'].lower(): (res['_id'], res['case_sensitive'])
+                    for res in db[keyword_type].find()
+                }
 
     def annotate(self, doc):
 

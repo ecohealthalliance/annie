@@ -141,8 +141,15 @@ class KeywordAnnotatorTest(unittest.TestCase):
         self.assertEqual(doc.tiers['diseases'].spans[0].start, 9)
         self.assertEqual(doc.tiers['diseases'].spans[0].end, 11)
 
+    def test_array(self):
+        annotator = KeywordAnnotator(keywords=["Trisolaris"])
 
+        doc = AnnoDoc("Trisolaris is an unpredictable place.")
+        doc.add_tier(annotator)
 
+        self.assertEqual(len(doc.tiers['keywords'].spans), 1)
+
+        self.assertEqual(doc.tiers['keywords'].spans[0].text, "Trisolaris")
 
 if __name__ == '__main__':
     unittest.main()
