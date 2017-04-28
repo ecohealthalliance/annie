@@ -43,6 +43,7 @@ class CountSpan(AnnoSpan):
             attr for attr in self.attributes
             if attr in match_dict
         ])
+        # print "match_span", match_span
         if 'death' in attributes:
             attributes.add('case')
         if 'count' in match_dict:
@@ -92,6 +93,7 @@ class CountAnnotator(Annotator):
         if 'stanford.times' not in doc.tiers:
             doc.add_tier(JVMNLPAnnotator([
                 'times', 'nes', 'sentences', 'tokens']))
+        print "annotate doc", doc.tiers['stanford.nes'].spans
         counts = []
         for ne_span in doc.tiers['stanford.nes'].spans:
             if ne_span.type == 'NUMBER' and is_valid_count(ne_span.text):
