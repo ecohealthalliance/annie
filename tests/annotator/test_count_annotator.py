@@ -251,7 +251,7 @@ class TestCountAnnotator(unittest.TestCase):
 
         example = """
         Last week an outbreak of the plague was reported by two different HHS departments in California.  
-        The first case involved a 72 year old man with 3 brothers, 1 sister and fourty nine grand children.  He had visited between 2 and 4
+        The first case involved a 72 year old man with 3 brothers 1 sister and 49 grand children.  He had visited between 2 and 4
         different countries in the last year.  On 1/2/2017 he traveled to Zambia stopping at the 
         lat/long: 121.125123, -90.234512 for a total of 7 days.  When asked what his favorite number was he responded, "883814019938"
         though there has been heavy speculation that the actual favorite is 7003.3383.
@@ -263,15 +263,15 @@ class TestCountAnnotator(unittest.TestCase):
 
         Health professionals have said that there is only a 12 percent chance these are accurate.  The directory of Nevada County HHS was quoted 
         as saying, "fifty thousand and twelve, four hundred and twelve, seventy three, one thousand, two hundred and sixteen".  
-        Concerned citizens have said, "50,012, 412, 73, 1000, 200 and 16"
+        Concerned citizens have said, "50,012, 412, 73, 200 and 16"
         """
 
         expectedCounts = [
             2,
             1,
             3,
-            1, 
-            # 49, this should be extracted
+            1,
+            49,
             4,
             7,
             5,
@@ -289,7 +289,6 @@ class TestCountAnnotator(unittest.TestCase):
             50012,
             412,
             73,
-            1000,
             200,
             16
         ]

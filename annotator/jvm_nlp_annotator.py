@@ -74,7 +74,6 @@ class JVMNLPAnnotator():
         # don't have Maps very well, so the tiers maps doesn't work out.
 
         return_json = request.json()
-
         if len(doc.text) != len(return_json['text']):
             raise Exception("text length changed after being sent back from jvm-nlp")
 
